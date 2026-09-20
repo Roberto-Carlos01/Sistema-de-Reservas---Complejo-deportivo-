@@ -1,0 +1,21 @@
+services:
+  postgres-db:
+    image: postgres:16-alpine
+    container_name: complejo_deportivo_db
+    restart: always
+    environment:
+      # Estos valores deben coincidir exactamente con las variables del archivo backend/.env
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin1234
+      POSTGRES_DB: complejo_deportivo
+    ports:
+      # Puerto del HOST : Puerto dentro del contenedor
+      - "5432:5432"
+    volumes:
+      # Ejecuta el script de base de datos automáticamente la PRIMERA vez que se crea el contenedor
+      - ./backend/src/config/script-database.sql:/docker-entrypoint-initdb.d/init.sql
+      # Persiste los datos aunque el contenedor se reinicie o elimine
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
