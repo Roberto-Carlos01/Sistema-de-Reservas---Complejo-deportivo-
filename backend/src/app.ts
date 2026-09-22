@@ -2,43 +2,72 @@
  * ============================================================================
  * ARCHIVO: app.ts
  * CAPA: Configuración de la Aplicación Express
- * 
+ *
  * PROPÓSITO:
- * Centralizar la creación y configuración de la instancia de Express:
- * 1. Middlewares globales (CORS, JSON body parser).
- * 2. Registro de rutas de cada módulo/iteración.
- * 3. Manejo centralizado de errores y rutas no encontradas (404).
+ * Centraliza la configuración de Express y el registro de todas las rutas
+ * del sistema.
  * ============================================================================
  */
 
 import express from 'express';
 import type { Application, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
+import path from 'path';
 
-// Importación de rutas por iteración
-import canchaRoutes from './routes/cancha.routes.js';
 
-// 1. Inicialización de la aplicación Express
-const app: Application = express();
+// ============================================================================
+// IMPORTACIÓN DE RUTAS
+// ============================================================================
 
-// 2. Middlewares globales
-// CORS: Permite que el frontend (ej. React en http://localhost:5173) haga peticiones a este backend
+// Gestión de canchas
+import canchaRoutes from './routes/cancha.routes';
+
+// Gestión de usuarios y autenticación
+import authRoutes from './routes/authRoutes';
+import userRoutes from './routes/userRoutes';
+import reservaRoutes from './routes/reserva.routes';
+import pagoRoutes from './routes/pago.routes';
+
+
+// ============================================================================
+// INICIALIZACIÓN DE EXPRESS
+// ============================================================================
+
+export const app: Application = express();
+
+// ============================================================================
+// MIDDLEWARES GLOBALES
+// ============================================================================
+
+// CORS
 app.use(cors({
-  origin: '*', // En producción se recomienda cambiar por el dominio específico del frontend
+  origin: '*',
   methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
-// Body parser: Permite a Express leer y transformar cuerpos de peticiones en formato JSON
+// Permite recibir JSON
 app.use(express.json());
 
-// Logger simple para registrar peticiones entrantes en consola
+// Archivos estáticos
+app.use(
+  '/uploads',
+  express.static(path.join(__dirname, '../uploads'))
+);
+
+// Logger simple
 app.use((req: Request, _res: Response, next: NextFunction) => {
-  console.log(`📡 [${req.method}] ${req.url} - ${new Date().toLocaleTimeString()}`);
+  console.log(
+    `📡 [${req.method}] ${req.url} - ${new Date().toLocaleTimeString()}`
+  );
+
   next();
 });
 
-// 3. Ruta de salud del sistema (Health Check)
+// ============================================================================
+// HEALTH CHECK
+// ============================================================================
+
 app.get('/api/health', (_req: Request, res: Response) => {
   res.status(200).json({
     status: 'OK',
@@ -47,11 +76,38 @@ app.get('/api/health', (_req: Request, res: Response) => {
   });
 });
 
-// 4. Registro de Rutas por Iteración / Módulo
-// Iteración 2: Gestión de Canchas
+// ============================================================================
+// RUTAS DE LA API
+// ============================================================================
+
+// Autenticación
+app.use('/api/auth', authRoutes);
+
+// Gestión de usuarios
+app.use('/api/usuarios', userRoutes);
+
+// Gestión de canchas
 app.use('/api/canchas', canchaRoutes);
 
-// 5. Manejador de rutas no encontradas (404)
+// Gestión de reservas
+app.use('/api/reservas', reservaRoutes);
+
+// Gestión de pagos
+app.use('/api/pagos', pagoRoutes);
+// ============================================================================
+// RUTA PRINCIPAL
+// ============================================================================
+
+app.get('/', (_req: Request, res: Response) => {
+  res.json({
+    message: 'API del sistema de gestión del complejo deportivo funcionando correctamente',
+  });
+});
+
+// ============================================================================
+// RUTA 404
+// ============================================================================
+
 app.use((req: Request, res: Response) => {
   res.status(404).json({
     success: false,
@@ -59,14 +115,28 @@ app.use((req: Request, res: Response) => {
   });
 });
 
-// 6. Middleware global para captura de excepciones no controladas (500)
-app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
-  console.error('💥 Error no controlado en la aplicación:', err);
-  res.status(500).json({
-    success: false,
-    message: 'Ocurrió un error inesperado en el servidor',
-    error: process.env.NODE_ENV === 'development' ? err.message : undefined,
-  });
-});
+// ============================================================================
+// MANEJO GLOBAL DE ERRORES
+// ============================================================================
+
+app.use(
+  (
+    err: Error,
+    _req: Request,
+    res: Response,
+    _next: NextFunction
+  ) => {
+    console.error('💥 Error no controlado en la aplicación:', err);
+
+    res.status(500).json({
+      success: false,
+      message: 'Ocurrió un error inesperado en el servidor',
+      error:
+        process.env.NODE_ENV === 'development'
+          ? err.message
+          : undefined,
+    });
+  }
+);
 
 export default app;

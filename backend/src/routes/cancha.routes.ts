@@ -13,7 +13,8 @@
  */
 
 import { Router } from 'express';
-import { canchaController } from '../controllers/cancha.controller.js';
+import { canchaController } from '../controllers/cancha.controller';
+import { verificarToken, esAdmin } from '../middlewares/authMiddleware';
 
 const router = Router();
 
@@ -23,6 +24,13 @@ const router = Router();
  * @access  Público
  */
 router.get('/', (req, res) => canchaController.getAll(req, res));
+
+/**
+ * @route   GET /api/canchas/:id/reservas
+ * @desc    Consultar reservas de una cancha por mes o por fecha
+ * @access  Público
+ */
+router.get('/:id/reservas', (req, res) => canchaController.getReservasPorCancha(req, res));
 
 /**
  * @route   GET /api/canchas/:id
@@ -36,20 +44,20 @@ router.get('/:id', (req, res) => canchaController.getById(req, res));
  * @desc    Crear una nueva cancha
  * @access  Administrador
  */
-router.post('/', (req, res) => canchaController.create(req, res));
+router.post('/', verificarToken, esAdmin, (req, res) => canchaController.create(req, res));
 
 /**
  * @route   PATCH /api/canchas/:id
  * @desc    Actualizar parcialmente los datos de una cancha
  * @access  Administrador
  */
-router.patch('/:id', (req, res) => canchaController.update(req, res));
+router.patch('/:id', verificarToken, esAdmin, (req, res) => canchaController.update(req, res));
 
 /**
  * @route   DELETE /api/canchas/:id
  * @desc    Eliminar una cancha por su ID
  * @access  Administrador
  */
-router.delete('/:id', (req, res) => canchaController.delete(req, res));
+router.delete('/:id', verificarToken, esAdmin, (req, res) => canchaController.delete(req, res));
 
 export default router;

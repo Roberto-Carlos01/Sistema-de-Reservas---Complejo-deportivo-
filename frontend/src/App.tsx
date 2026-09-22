@@ -1,65 +1,65 @@
-import { useState } from 'react';
-import { Navbar } from './components/Navbar';
-import { Hero } from './components/Hero';
-import { HowItWorks } from './components/HowItWorks';
-import { ServicesShowcase } from './components/ServicesShowcase';
-import { Footer } from './components/Footer';
-import { CanchaList } from './iteraciones/iteracion-2-canchas/CanchaList';
-import './index.css';
+/**
+ * ============================================================================
+ * ARCHIVO: App.tsx
+ * PROPÓSITO: Configuración central de Rutas del Sistema de Reservas
+ * ============================================================================
+ */
+
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import RutasProtegidas from './components/RutasProtegidas';
+import Home from './pages/Home';
+import CanchasPage from './pages/CanchasPage';
+import Login from './pages/Login';
+import Registro from './pages/Registro';
+import PanelAdmin from './pages/PanelAdmin';
+import Perfil from './pages/Perfil';
+import Dashboard from './pages/Dashboard';
+import SolicitarRecuperacion from './pages/SolicitarRecuperacion';
+import ResetPassword from './pages/ResetPassword';
+import MisReservas from './pages/MisReservas';
+import GestionReservas from './pages/GestionReservas';
+import VerificarPagos from './pages/VerificarPagos';
+import DisponibilidadCancha from './pages/DisponibilidadCancha';
 
 function App() {
-  const [authModalOpen, setAuthModalOpen] = useState(false);
-
   return (
-    <div className="app-layout">
-      {/* 1. Barra de Navegación Principal */}
-      <Navbar onOpenAuth={() => setAuthModalOpen(true)} />
+    <BrowserRouter>
+      <Routes>
+        {/* 1. Página Principal Pública (Landing Page con Hero, Canchas y Servicios) */}
+        <Route path="/" element={<Home />} />
+        
+        {/* 2. Rutas Públicas de Autenticación */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/registro" element={<Registro />} />
+        <Route path="/solicitar-recuperacion" element={<SolicitarRecuperacion />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        
+        {/* 3. Rutas Privadas (Protegidas por AuthContext y envueltas con el Sidebar del Panel) */}
+        <Route element={<RutasProtegidas />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/canchas" element={<CanchasPage />} />
+            <Route path="/canchas/:id/reservar" element={<DisponibilidadCancha />} />
+            <Route path="/panel-admin" element={<PanelAdmin />} />
+            <Route path="/perfil" element={<Perfil />} />
+            
+            {/* --- RUTAS DE RESERVAS --- */}
+            {/* Cliente: Ver sus propias reservas */}
+            <Route path="/reservas" element={<MisReservas />} />
+            
+            {/* Empleado/Admin: Ver y gestionar todas las reservas */}
+            <Route path="/gestion-reservas" element={<GestionReservas />} />
 
-      <main>
-        {/* 2. Sección Hero con resumen y estadísticas */}
-        <Hero />
+            {/* Admin/Empleado: Verificar pagos */}
+            <Route path="/verificar-pagos" element={<VerificarPagos />} />
 
-        {/* 3. Módulo CRUD Principal: Iteración 2 (Gestión de Canchas) */}
-        <CanchaList />
+            {/* Módulos futuros */}
+            <Route path="/reportes" element={<div className="p-6 text-claro-texto dark:text-oscuro-texto bg-claro-tarjeta dark:bg-oscuro-tarjeta rounded-xl border border-claro-borde dark:border-oscuro-borde">Módulo de Reportes (Iteración 6 en desarrollo)...</div>} />
+        </Route>
 
-        {/* 4. ¿Cómo funciona la reserva? */}
-        <HowItWorks />
-
-        {/* 5. Servicios y Comodidades del complejo */}
-        <ServicesShowcase />
-      </main>
-
-      {/* 6. Pie de Página */}
-      <Footer />
-
-      {/* Modal demostrativo de Autenticación (Iteración 1) */}
-      {authModalOpen && (
-        <div className="modal-backdrop" onClick={() => setAuthModalOpen(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '420px' }}>
-            <div className="modal-header">
-              <h2>Iniciar Sesión</h2>
-              <button type="button" className="btn-close" onClick={() => setAuthModalOpen(false)}>×</button>
-            </div>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1.25rem' }}>
-              Módulo de la <strong>Iteración 1 (Gestión de Usuarios)</strong>. Ingresa con tu correo registrado.
-            </p>
-            <form onSubmit={e => { e.preventDefault(); alert('Módulo de autenticación en desarrollo por el equipo de Iteración 1'); setAuthModalOpen(false); }}>
-              <div className="form-group" style={{ marginBottom: '1rem' }}>
-                <label>Correo Electrónico</label>
-                <input type="email" placeholder="usuario@gmail.com" required defaultValue="maria.lopez@gmail.com" />
-              </div>
-              <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-                <label>Contraseña</label>
-                <input type="password" placeholder="••••••••" required defaultValue="123456" />
-              </div>
-              <button type="submit" className="btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
-                Ingresar al Sistema
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
-    </div>
+        {/* 4. Redirección por defecto ante rutas desconocidas */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
