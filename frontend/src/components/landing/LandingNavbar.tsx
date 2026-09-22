@@ -53,6 +53,15 @@ export const LandingNavbar: React.FC = () => {
                 {isAdmin ? "Panel Admin" : "Mi Panel"}
               </Link>
 
+              {/* Botón de acceso al catálogo de Eventos */}
+              <Link
+                to="/eventos"
+                className="btn-outline-sm hidden md:inline-flex"
+                title="Eventos y Servicios Sociales"
+              >
+                Eventos
+              </Link>
+
               {/* Botón de perfil */}
               <Link
                 to="/perfil"

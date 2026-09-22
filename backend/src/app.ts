@@ -27,6 +27,7 @@ import authRoutes from './routes/authRoutes';
 import userRoutes from './routes/userRoutes';
 import reservaRoutes from './routes/reserva.routes';
 import pagoRoutes from './routes/pago.routes';
+import eventoRoutes from './routes/evento.routes';
 
 
 // ============================================================================
@@ -94,6 +95,9 @@ app.use('/api/reservas', reservaRoutes);
 
 // Gestión de pagos
 app.use('/api/pagos', pagoRoutes);
+
+// Gestión de eventos y servicios sociales
+app.use('/api/eventos', eventoRoutes);
 // ============================================================================
 // RUTA PRINCIPAL
 // ============================================================================

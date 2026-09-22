@@ -1,0 +1,23 @@
+# Dependencias
+node_modules/
+backend/node_modules/
+frontend/node_modules/
+
+# Variables de entorno (contraseñas, JWT_SECRET, etc.)
+.env
+backend/.env
+frontend/.env
+
+# Builds
+dist/
+build/
+frontend/dist/
+backend/dist/
+
+# Logs
+npm-debug.log*
+*.log
+
+# Editor / OS
+.vscode/
+.DS_Store

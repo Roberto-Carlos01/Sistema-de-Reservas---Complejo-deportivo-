@@ -20,6 +20,9 @@ import MisReservas from './pages/MisReservas';
 import GestionReservas from './pages/GestionReservas';
 import VerificarPagos from './pages/VerificarPagos';
 import DisponibilidadCancha from './pages/DisponibilidadCancha';
+import EventosPage from './pages/EventosPage';
+import GestionEventos from './pages/GestionEventos';
+import MisInscripciones from './pages/MisInscripciones';
 
 function App() {
   return (
@@ -51,6 +54,11 @@ function App() {
 
             {/* Admin/Empleado: Verificar pagos */}
             <Route path="/verificar-pagos" element={<VerificarPagos />} />
+
+            {/* --- RUTAS DE EVENTOS --- */}
+            <Route path="/eventos" element={<EventosPage />} />
+            <Route path="/mis-inscripciones" element={<MisInscripciones />} />
+            <Route path="/gestion-eventos" element={<GestionEventos />} />
 
             {/* Módulos futuros */}
             <Route path="/reportes" element={<div className="p-6 text-claro-texto dark:text-oscuro-texto bg-claro-tarjeta dark:bg-oscuro-tarjeta rounded-xl border border-claro-borde dark:border-oscuro-borde">Módulo de Reportes (Iteración 6 en desarrollo)...</div>} />

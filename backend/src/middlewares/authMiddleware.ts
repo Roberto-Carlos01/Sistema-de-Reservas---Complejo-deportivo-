@@ -60,4 +60,4 @@ const esCliente = (req: Request, res: Response, next: NextFunction) => {
     next();
 };
 
-export { verificarToken, esAdmin, esAdminOEmpleado };
+export { verificarToken, esAdmin, esAdminOEmpleado, esCliente };

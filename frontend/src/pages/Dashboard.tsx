@@ -40,27 +40,66 @@ const Dashboard = () => {
                                 Ir a Verificación de Pagos &rarr;
                             </Link>
                         </div>
+                        <div className="bg-claro-tarjeta dark:bg-oscuro-tarjeta p-6 rounded-2xl border border-claro-borde dark:border-oscuro-borde shadow-sm">
+                            <h3 className="text-xl font-bold text-claro-texto dark:text-oscuro-texto mb-2">Gestión de Eventos</h3>
+                            <p className="text-claro-texto2 dark:text-oscuro-texto2 mb-4">Crea, edita y cancela eventos, y asigna canchas y servicios.</p>
+                            <Link to="/gestion-eventos" className="text-claro-primario dark:text-oscuro-primario font-medium hover:underline">
+                                Ir a Gestión de Eventos &rarr;
+                            </Link>
+                        </div>
                     </>
                 )}
 
                 {usuario?.rol === 'Empleado' && (
-                    <div className="bg-claro-tarjeta dark:bg-oscuro-tarjeta p-6 rounded-2xl border border-claro-borde dark:border-oscuro-borde shadow-sm">
-                        <h3 className="text-xl font-bold text-claro-texto dark:text-oscuro-texto mb-2">Verificar Pagos</h3>
-                        <p className="text-claro-texto2 dark:text-oscuro-texto2 mb-4">Aprueba o rechaza pagos virtuales pendientes de los clientes.</p>
-                        <Link to="/verificar-pagos" className="text-claro-primario dark:text-oscuro-primario font-medium hover:underline">
-                            Ir a Verificación de Pagos &rarr;
-                        </Link>
-                    </div>
+                    <>
+                        <div className="bg-claro-tarjeta dark:bg-oscuro-tarjeta p-6 rounded-2xl border border-claro-borde dark:border-oscuro-borde shadow-sm">
+                            <h3 className="text-xl font-bold text-claro-texto dark:text-oscuro-texto mb-2">Verificar Pagos</h3>
+                            <p className="text-claro-texto2 dark:text-oscuro-texto2 mb-4">Aprueba o rechaza pagos virtuales pendientes de los clientes.</p>
+                            <Link to="/verificar-pagos" className="text-claro-primario dark:text-oscuro-primario font-medium hover:underline">
+                                Ir a Verificación de Pagos &rarr;
+                            </Link>
+                        </div>
+                        <div className="bg-claro-tarjeta dark:bg-oscuro-tarjeta p-6 rounded-2xl border border-claro-borde dark:border-oscuro-borde shadow-sm">
+                            <h3 className="text-xl font-bold text-claro-texto dark:text-oscuro-texto mb-2">Eventos</h3>
+                            <p className="text-claro-texto2 dark:text-oscuro-texto2 mb-4">Consulta los próximos eventos programados en el complejo.</p>
+                            <Link to="/eventos" className="text-claro-primario dark:text-oscuro-primario font-medium hover:underline">
+                                Ver Eventos &rarr;
+                            </Link>
+                        </div>
+                        <div className="bg-claro-tarjeta dark:bg-oscuro-tarjeta p-6 rounded-2xl border border-claro-borde dark:border-oscuro-borde shadow-sm">
+                            <h3 className="text-xl font-bold text-claro-texto dark:text-oscuro-texto mb-2">Gestión de Eventos</h3>
+                            <p className="text-claro-texto2 dark:text-oscuro-texto2 mb-4">Crea, edita y cancela eventos, y asigna canchas y servicios.</p>
+                            <Link to="/gestion-eventos" className="text-claro-primario dark:text-oscuro-primario font-medium hover:underline">
+                                Ir a Gestión de Eventos &rarr;
+                            </Link>
+                        </div>
+                    </>
                 )}
 
                 {(usuario?.rol === 'Cliente' || usuario?.rol === 'Usuario') && (
-                    <div className="bg-claro-tarjeta dark:bg-oscuro-tarjeta p-6 rounded-2xl border border-claro-borde dark:border-oscuro-borde shadow-sm">
-                        <h3 className="text-xl font-bold text-claro-texto dark:text-oscuro-texto mb-2">Reservar Cancha</h3>
-                        <p className="text-claro-texto2 dark:text-oscuro-texto2 mb-4">Explora disponibilidad y agenda tu próximo partido.</p>
-                        <Link to="/canchas" className="text-claro-primario dark:text-oscuro-primario font-medium hover:underline">
-                            Explorar canchas &rarr;
-                        </Link>
-                    </div>
+                    <>
+                        <div className="bg-claro-tarjeta dark:bg-oscuro-tarjeta p-6 rounded-2xl border border-claro-borde dark:border-oscuro-borde shadow-sm">
+                            <h3 className="text-xl font-bold text-claro-texto dark:text-oscuro-texto mb-2">Reservar Cancha</h3>
+                            <p className="text-claro-texto2 dark:text-oscuro-texto2 mb-4">Explora disponibilidad y agenda tu próximo partido.</p>
+                            <Link to="/canchas" className="text-claro-primario dark:text-oscuro-primario font-medium hover:underline">
+                                Explorar canchas &rarr;
+                            </Link>
+                        </div>
+                        <div className="bg-claro-tarjeta dark:bg-oscuro-tarjeta p-6 rounded-2xl border border-claro-borde dark:border-oscuro-borde shadow-sm">
+                            <h3 className="text-xl font-bold text-claro-texto dark:text-oscuro-texto mb-2">Eventos</h3>
+                            <p className="text-claro-texto2 dark:text-oscuro-texto2 mb-4">Descubre los próximos eventos e inscríbete al que te interese.</p>
+                            <Link to="/eventos" className="text-claro-primario dark:text-oscuro-primario font-medium hover:underline">
+                                Ver Eventos &rarr;
+                            </Link>
+                        </div>
+                        <div className="bg-claro-tarjeta dark:bg-oscuro-tarjeta p-6 rounded-2xl border border-claro-borde dark:border-oscuro-borde shadow-sm">
+                            <h3 className="text-xl font-bold text-claro-texto dark:text-oscuro-texto mb-2">Mis Inscripciones</h3>
+                            <p className="text-claro-texto2 dark:text-oscuro-texto2 mb-4">Revisa los eventos a los que ya te inscribiste.</p>
+                            <Link to="/mis-inscripciones" className="text-claro-primario dark:text-oscuro-primario font-medium hover:underline">
+                                Ver Mis Inscripciones &rarr;
+                            </Link>
+                        </div>
+                    </>
                 )}
             </div>
         </div>

@@ -58,6 +58,27 @@ const Navbar = ({ abierto, onCerrar }: NavbarProps) => {
             icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z', 
             roles: ['Administrador', 'Empleado'] 
         },
+        // --- EVENTOS: catálogo/inscripción, visible para todos los roles ---
+        { 
+            path: '/eventos', 
+            name: 'Eventos', 
+            icon: 'M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z', 
+            roles: ['Administrador', 'Empleado', 'Cliente', 'Usuario'] 
+        },
+        // --- MIS INSCRIPCIONES: solo cliente ---
+        { 
+            path: '/mis-inscripciones', 
+            name: 'Mis Inscripciones', 
+            icon: 'M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z', 
+            roles: ['Cliente', 'Usuario'] 
+        },
+        // --- GESTIÓN DE EVENTOS: admin/empleado crea, asocia servicios y cancela ---
+        { 
+            path: '/gestion-eventos', 
+            name: 'Gestión de Eventos', 
+            icon: 'M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5', 
+            roles: ['Administrador', 'Empleado'] 
+        },
         { 
             path: '/reportes', 
             name: 'Reportes', 

@@ -83,6 +83,7 @@ CREATE TABLE evento (
     tipo_evento        VARCHAR(50),
     motivo_cancelacion TEXT,
     fecha_cancelacion  TIMESTAMP,
+    id_usuario_cancelacion INTEGER REFERENCES usuario(id_usuario),
     estado             VARCHAR(20) NOT NULL DEFAULT 'programado',
     id_administrador   INTEGER NOT NULL REFERENCES administrador(id_administrador),
     fecha_creacion     TIMESTAMP NOT NULL DEFAULT now()
@@ -113,6 +114,7 @@ CREATE TABLE pago (
     tipo_registro       VARCHAR(20) NOT NULL,
     referencia_pasarela VARCHAR(100),
     nro_comprobante     VARCHAR(50),
+    comprobante_url     TEXT,
     estado              VARCHAR(20) NOT NULL DEFAULT 'pagado',
     id_reserva          INTEGER NOT NULL UNIQUE REFERENCES reserva(id_reserva)
 );
