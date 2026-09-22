@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { useAuth } from "../context/AuthContext";
 import { defaultRangeDate } from "../utils/formatDate";
 import api from "../services/api";
 import { DonaMetricas, MetodoPagoMetrica } from "../components/canchas/reportes/ReportesPagosGrafica";
+import { MapaOcupacionCanchas } from "../components/canchas/reportes/ReportesHeatMap";
 
 
 interface ReportPagos {
@@ -15,8 +15,6 @@ const Reportes = () => {
 
   // obtiene la fecha de inicio por defecto como el primer dia del mes en curso evaluando la fecha actual
   const defaultRange = defaultRangeDate();
-
-  const { usuario } = useAuth();
 
   const [fechaInicio, setFechaInicio] = useState<string>(defaultRange.fechaInicio);
   const [fechaFin, setFechaFin] = useState<string>(defaultRange.fechaFin);
@@ -118,9 +116,10 @@ const Reportes = () => {
 
       {/* CONTENIDO SEGÚN LA PESTAÑA SELECCIONADA */}
       {tabActive === 'ocupacion' && (
-        <div>
-          {/* Aquí van tus tarjetas de Ingresos, Totales, Métodos de pago, etc. */}
-        </div>
+        <MapaOcupacionCanchas
+          fechaInicio={fechaInicio}
+          fechaFin={fechaFin}
+        />
       )}
 
       {tabActive === 'finanzas' && (

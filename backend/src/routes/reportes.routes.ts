@@ -10,4 +10,8 @@ router.post('/pagos', [verificarToken, esAdmin], ReportesController.obtenerDatos
 
 router.post('/metricasPagos', [verificarToken, esAdmin], ReportesController.obtenerMetricasPagos);
 
+router.post('/heatmap', [verificarToken, esAdmin], ReportesController.obtenerDatosOcupacion);
+
+router.get('/listarCanchas', [verificarToken, esAdmin], ReportesController.listarCanchas);
+
 export default router;

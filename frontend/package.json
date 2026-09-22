@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@nivo/heatmap": "^0.99.0",
     "@nivo/pie": "^0.99.0",
     "axios": "^1.6.8",
     "jwt-decode": "^4.0.0",

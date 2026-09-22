@@ -38,11 +38,66 @@ export const ReportesModel = {
         COUNT(metodo_pago)::int AS cantidad,
         SUM(monto)::numeric AS monto
       FROM pago
-      WHERE fecha_pago >= $1::date AND fecha_pago < ($2::date + INTERVAL '1 day') AND metodo_pago != 'reembolsado'
+      WHERE fecha_pago >= $1::date AND fecha_pago < ($2::date + INTERVAL '1 day') AND estado != 'reembolsado'
       GROUP BY metodo_pago;
     `;
     const values = [fechaInicio, fechaFin];
     const { rows } = await pool.query<MetricasPagos>(query, values);
+
+    return rows;
+  },
+
+  obtDataHeatMap: async (fechaInicio: string, fechaFin: string, idCancha: number) => {
+    const query = `
+      WITH horas_cancha AS (
+        -- Generamos la matriz de días de la semana y bloques de hora
+        SELECT d.dia_num, d.dia_nombre, h.hora
+          FROM (
+            VALUES 
+              (1, 'Lunes'), (2, 'Martes'), (3, 'Miércoles'), 
+              (4, 'Jueves'), (5, 'Viernes'), (6, 'Sábado'), (7, 'Domingo')
+          ) AS d(dia_num, dia_nombre)
+          CROSS JOIN (
+            SELECT generate_series(8, 23) || ':00' AS hora -- Genera desde las 08:00 hasta las 23:00
+          ) h
+      ),
+      reservas_filtradas AS (
+        SELECT 
+          EXTRACT(ISODOW FROM r.fecha_reserva) AS dia_num,
+          TO_CHAR(r.hora_inicio, 'HH24:00') AS hora,
+          COUNT(r.id_reserva) AS total_reservas
+        FROM reserva r
+        WHERE r.fecha_reserva >= $1::date 
+          AND r.fecha_reserva < ($2::date + INTERVAL '1 day')
+          AND r.estado IN ('confirmada', 'completada', 'pagada')
+          -- Si $3 es NULL o 'todas', ignora el filtro de cancha
+          AND ($3::text IS NULL OR $3::text = 'todas' OR r.id_cancha = $3::integer)
+        GROUP BY EXTRACT(ISODOW FROM r.fecha_reserva), TO_CHAR(r.hora_inicio, 'HH24:00')
+      )
+      SELECT 
+        hc.dia_nombre AS dia,
+        hc.hora,
+        COALESCE(rf.total_reservas, 0)::int AS reservas
+      FROM horas_cancha hc
+      LEFT JOIN reservas_filtradas rf 
+        ON hc.dia_num = rf.dia_num AND hc.hora = rf.hora
+      ORDER BY hc.dia_num, hc.hora;
+    `;
+    const values = [fechaInicio, fechaFin, idCancha];
+    const { rows } = await pool.query(query, values);
+
+    return rows;
+  },
+
+  listarCanchas: async () => {
+    const query = `
+      SELECT
+        id_cancha,
+        nombre,
+        disciplina
+      FROM cancha;
+    `;
+    const { rows } = await pool.query(query);
 
     return rows;
   }
