@@ -304,3 +304,12 @@ INSERT INTO pago (id_pago, monto, metodo_pago, fecha_pago, tipo_registro, refere
 (13,95.00,'efectivo','2026-09-28 19:05:00','manual',NULL,'CMP-0013','pagado',13),
 (14,80.00,'qr','2026-09-29 09:05:00','automatico','PAS-0009','CMP-0014','pagado',14),
 (15,50.00,'tarjeta','2026-09-29 18:05:00','automatico','PAS-0010','CMP-0015','pagado',15);
+
+-- ---------- EVENTO_CANCHA ----------
+INSERT INTO evento_cancha (id_evento, id_cancha) VALUES
+(1, 1),  -- Torneo Interbarrial de Futbol       -> Cancha Central (futbol)
+(2, 3),  -- Exhibicion de Voley                 -> Cancha Sur (voley)
+(3, 2),  -- Copa Interna de Basquet             -> Cancha Norte (basquet)
+(4, 5),  -- Clase Abierta de Padel              -> Cancha de Padel 1
+(5, 7),  -- Maraton 5K Interna                  -> Pista de Atletismo
+(6, 3);  -- Torneo de Voley Playero (cancelado) -> Cancha Sur (voley)
