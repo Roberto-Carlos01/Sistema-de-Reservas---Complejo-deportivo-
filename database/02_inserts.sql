@@ -130,3 +130,31 @@ INSERT INTO pago (id_pago, monto, metodo_pago, fecha_pago, tipo_registro, refere
 (13,95.00,'efectivo','2026-09-28 19:05:00','manual',NULL,'CMP-0013','pagado',13),
 (14,80.00,'qr','2026-09-29 09:05:00','automatico','PAS-0009','CMP-0014','pagado',14),
 (15,50.00,'tarjeta','2026-09-29 18:05:00','automatico','PAS-0010','CMP-0015','pagado',15);
+
+-- =========================================================
+-- DATOS DE PRUEBA PARA REPORTE DE RENTABILIDAD
+-- =========================================================
+
+INSERT INTO evento
+(id_evento, nombre_evento, descripcion, fecha_evento, hora_inicio, hora_fin,
+ cupo_maximo, tipo_evento, estado, id_administrador, fecha_creacion)
+VALUES
+(
+    7,
+    'Evento Prueba Rentabilidad',
+    'Evento de prueba para reporte de rentabilidad',
+    '2026-09-05',
+    '09:00',
+    '13:00',
+    50,
+    'torneo',
+    'programado',
+    1,
+    '2026-09-05 08:00:00'
+);
+
+INSERT INTO evento_servicio
+(id_evento, id_servicio, costo_contratado)
+VALUES
+(7, 1, 150.00),
+(7, 2, 300.00);
