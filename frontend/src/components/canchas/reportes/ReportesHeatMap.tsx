@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ResponsiveHeatMap } from '@nivo/heatmap';
 import api from '../../../services/api';
 
+
 interface Cancha {
   id_cancha: number;
   nombre: string;
@@ -23,7 +24,10 @@ export const MapaOcupacionCanchas: React.FC<MapaOcupacionProps> = ({ fechaInicio
   const [canchaSeleccionada, setCanchaSeleccionada] = useState<string>('todas');
   const [dataHeatmap, setDataHeatmap] = useState<HeatmapNivoData[]>([]);
   const [cargando, setCargando] = useState<boolean>(false);
-
+  const [totalReservas, setTotalReservas] = useState<number>(0);
+  const [horasOcupadas, setHorasOcupadas] = useState<number>(0);
+  const [mayorDemanda, setMayorDemanda] = useState<string>('-');
+  
   useEffect(() => {
     const obtenerCanchas = async () => {
       const res = await api.get('/reportes/listarCanchas');
@@ -46,9 +50,24 @@ export const MapaOcupacionCanchas: React.FC<MapaOcupacionProps> = ({ fechaInicio
     setCargando(true);
 
     const result = await api.post('/reportes/heatmap', payload);
+    const resultTotal = await api.post('/reportes/totalReservas', payload);
+    const resultHoras = await api.post('/reportes/horasOcupadas', payload);
+    const resultDemanda = await api.post('/reportes/mayorDemanda', payload);
 
     if (result.data.success) {
-      setDataHeatmap(result.data.data); // Asumiendo que el backend envía la data ya transformada
+      setDataHeatmap(result.data.data);
+    }
+
+    if (resultTotal.data.success) {
+      setTotalReservas(resultTotal.data.data.total);
+    }
+
+    if (resultHoras.data.success) {
+      setHorasOcupadas(Number(resultHoras.data.data.horas));
+    }
+
+    if (resultDemanda.data.success) {
+      setMayorDemanda(resultDemanda.data.data.hora);
     }
     setCargando(false);
   };
@@ -56,6 +75,46 @@ export const MapaOcupacionCanchas: React.FC<MapaOcupacionProps> = ({ fechaInicio
 
     obtenerOcupacion();
   }, [fechaInicio, fechaFin, canchaSeleccionada]);
+    const exportarCSV = () => {
+      let contenido = 'REPORTE DE OCUPACIÓN\n\n';
+
+      contenido += `Fecha inicio,${fechaInicio}\n`;
+      contenido += `Fecha fin,${fechaFin}\n`;
+
+      const cancha =
+        canchaSeleccionada === 'todas'
+          ? 'Todas las canchas'
+          : canchas.find(
+              (c) => c.id_cancha.toString() === canchaSeleccionada
+            )?.nombre || 'Cancha seleccionada';
+
+      contenido += `Cancha,${cancha}\n`;
+      contenido += `Total de reservas,${totalReservas}\n`;
+      contenido += `Horas ocupadas,${horasOcupadas}\n`;
+      contenido += `Mayor demanda,${mayorDemanda}\n\n`;
+
+      contenido += 'Día,Hora,Reservas\n';
+
+      dataHeatmap.forEach((dia) => {
+        dia.data.forEach((hora) => {
+          contenido += `${dia.id},${hora.x},${hora.y}\n`;
+        });
+      });
+
+
+      const archivo = new Blob([contenido], {
+        type: 'text/csv;charset=utf-8;'
+      });
+
+      const url = URL.createObjectURL(archivo);
+      const enlace = document.createElement('a');
+
+      enlace.href = url;
+      enlace.download = 'reporte_ocupacion.csv';
+      enlace.click();
+
+      URL.revokeObjectURL(url);
+    };
 
   return (
     <div className="bg-claro-tarjeta dark:bg-oscuro-tarjeta p-5 rounded-2xl border border-claro-borde dark:border-oscuro-borde shadow-sm transition-colors">
@@ -70,6 +129,23 @@ export const MapaOcupacionCanchas: React.FC<MapaOcupacionProps> = ({ fechaInicio
             Frecuencia de reservas según días y horas pico
           </p>
         </div>
+         <div className="flex items-center gap-2">
+            <button
+              onClick={exportarCSV}
+              className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition"
+            >
+              Exportar CSV
+            </button>
+
+            <label
+              htmlFor="select-cancha"
+              className="text-xs font-medium text-claro-texto2 dark:text-oscuro-texto2"
+            >
+              Cancha:
+            </label>
+
+            {/* select de cancha */}
+          </div>
 
         {/* Selector de Canchas */}
         <div className="flex items-center gap-2">
@@ -96,6 +172,38 @@ export const MapaOcupacionCanchas: React.FC<MapaOcupacionProps> = ({ fechaInicio
             ))}
           </select>
         </div>
+      </div>
+
+      {/* Resumen de ocupación */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+
+        <div className="bg-claro-fondo dark:bg-oscuro-fondo p-4 rounded-xl border border-claro-borde dark:border-oscuro-borde">
+          <p className="text-xs font-medium text-claro-texto2 dark:text-oscuro-texto2">
+            Total de reservas
+          </p>
+          <p className="text-2xl font-bold text-claro-texto dark:text-oscuro-texto mt-1">
+            {totalReservas}
+          </p>
+        </div>
+
+        <div className="bg-claro-fondo dark:bg-oscuro-fondo p-4 rounded-xl border border-claro-borde dark:border-oscuro-borde">
+          <p className="text-xs font-medium text-claro-texto2 dark:text-oscuro-texto2">
+            Horas ocupadas
+          </p>
+          <p className="text-2xl font-bold text-claro-texto dark:text-oscuro-texto mt-1">
+            {horasOcupadas}
+          </p>
+        </div>
+
+        <div className="bg-claro-fondo dark:bg-oscuro-fondo p-4 rounded-xl border border-claro-borde dark:border-oscuro-borde">
+          <p className="text-xs font-medium text-claro-texto2 dark:text-oscuro-texto2">
+            Mayor demanda
+          </p>
+          <p className="text-2xl font-bold text-claro-texto dark:text-oscuro-texto mt-1">
+            {mayorDemanda}
+          </p>
+        </div>
+
       </div>
 
       {cargando ? (

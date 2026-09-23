@@ -14,4 +14,25 @@ router.post('/heatmap', [verificarToken, esAdmin], ReportesController.obtenerDat
 
 router.get('/listarCanchas', [verificarToken, esAdmin], ReportesController.listarCanchas);
 
+router.post(
+  '/totalReservas',
+  [verificarToken, esAdmin],
+  ReportesController.obtenerTotalReservas
+);
+router.post(
+  '/horasOcupadas',
+  [verificarToken, esAdmin],
+  ReportesController.obtenerHorasOcupadas
+);
+
+router.post(
+  '/mayorDemanda',
+  [verificarToken, esAdmin],
+  ReportesController.obtenerMayorDemanda
+);
+router.post(
+  '/rentabilidadServicios',
+  [verificarToken, esAdmin],
+  ReportesController.obtenerRentabilidadServicios
+);
 export default router;

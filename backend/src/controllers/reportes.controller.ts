@@ -39,25 +39,114 @@ export const ReportesController = {
       res.status(500).json({ success: false, message: 'Error al obtener datos para el heatmap.' });
     }
   },
-
-  listarCanchas: async (req: Request, res: Response) => {
+    listarCanchas: async (req: Request, res: Response) => {
     try {
       const result = await ReportesModel.listarCanchas();
 
       res.status(200).json({ success: true, data: result });
     } catch (error) {
-      res.status(500).json({ success: false, message: 'Error al listar las canchas registradas.' });
+      res.status(500).json({
+        success: false,
+        message: 'Error al listar las canchas registradas.'
+      });
+    }
+  },
+
+  obtenerTotalReservas: async (req: Request, res: Response) => {
+    try {
+      const { fechaInicio, fechaFin, idCancha } = req.body;
+
+      const result = await ReportesModel.obtenerTotalReservas(
+        fechaInicio,
+        fechaFin,
+        idCancha
+      );
+
+      res.status(200).json({
+        success: true,
+        data: result
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: 'Error al obtener el total de reservas.'
+      });
+    }
+  },
+    obtenerHorasOcupadas: async (req: Request, res: Response) => {
+    try {
+      const { fechaInicio, fechaFin, idCancha } = req.body;
+
+      const result = await ReportesModel.obtenerHorasOcupadas(
+        fechaInicio,
+        fechaFin,
+        idCancha
+      );
+
+      res.status(200).json({
+        success: true,
+        data: result
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: 'Error al obtener las horas ocupadas.'
+      });
+    }
+  },
+
+  obtenerMayorDemanda: async (req: Request, res: Response) => {
+    try {
+      const { fechaInicio, fechaFin, idCancha } = req.body;
+
+      const result = await ReportesModel.obtenerMayorDemanda(
+        fechaInicio,
+        fechaFin,
+        idCancha
+      );
+
+      res.status(200).json({
+        success: true,
+        data: result
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: 'Error al obtener la mayor demanda.'
+      });
+    }
+  },
+  obtenerRentabilidadServicios: async (req: Request, res: Response) => {
+    try {
+      const { fechaInicio, fechaFin } = req.body;
+
+      const result = await ReportesModel.obtenerRentabilidadServicios(
+        fechaInicio,
+        fechaFin
+      );
+
+      res.status(200).json({
+        success: true,
+        data: result
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: 'Error al obtener la rentabilidad de servicios.'
+      });
     }
   }
 };
-
-const transformarANivoHeatmap = (rows: { dia: string; hora: string; reservas: number }[]) => {
+const transformarANivoHeatmap = (
+  rows: { dia: string; hora: string; reservas: number }[]
+) => {
   const diasMap = new Map<string, { x: string; y: number }[]>();
 
   rows.forEach((row) => {
     if (!diasMap.has(row.dia)) {
       diasMap.set(row.dia, []);
     }
+
     diasMap.get(row.dia)?.push({
       x: row.hora,
       y: row.reservas,

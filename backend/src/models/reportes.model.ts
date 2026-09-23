@@ -100,5 +100,98 @@ export const ReportesModel = {
     const { rows } = await pool.query(query);
 
     return rows;
+  },
+  obtenerTotalReservas: async (
+    fechaInicio: string,
+    fechaFin: string,
+    idCancha: string
+  ) => {
+    const query = `
+      SELECT COUNT(*)::int AS total
+      FROM reserva
+      WHERE fecha_reserva >= $1::date
+        AND fecha_reserva < ($2::date + INTERVAL '1 day')
+        AND estado IN ('confirmada', 'completada', 'pagada')
+        AND ($3::text IS NULL OR $3::text = 'todas' OR id_cancha = $3::integer);
+    `;
+
+    const values = [fechaInicio, fechaFin, idCancha];
+    const { rows } = await pool.query(query, values);
+
+    return rows[0];
+  },
+    obtenerHorasOcupadas: async (
+    fechaInicio: string,
+    fechaFin: string,
+    idCancha: string
+  ) => {
+    const query = `
+      SELECT COALESCE(
+        SUM(
+          EXTRACT(EPOCH FROM (hora_fin - hora_inicio)) / 3600
+        ), 0
+      )::numeric(10,2) AS horas
+      FROM reserva
+      WHERE fecha_reserva >= $1::date
+        AND fecha_reserva < ($2::date + INTERVAL '1 day')
+        AND estado IN ('confirmada', 'completada', 'pagada')
+        AND ($3::text IS NULL OR $3::text = 'todas' OR id_cancha = $3::integer);
+    `;
+
+    const values = [fechaInicio, fechaFin, idCancha];
+    const { rows } = await pool.query(query, values);
+
+    return rows[0];
+  },
+
+  obtenerMayorDemanda: async (
+    fechaInicio: string,
+    fechaFin: string,
+    idCancha: string
+  ) => {
+    const query = `
+      SELECT 
+        TO_CHAR(hora_inicio, 'HH24:00') AS hora,
+        COUNT(*)::int AS reservas
+      FROM reserva
+      WHERE fecha_reserva >= $1::date
+        AND fecha_reserva < ($2::date + INTERVAL '1 day')
+        AND estado IN ('confirmada', 'completada', 'pagada')
+        AND ($3::text IS NULL OR $3::text = 'todas' OR id_cancha = $3::integer)
+      GROUP BY TO_CHAR(hora_inicio, 'HH24:00')
+      ORDER BY reservas DESC
+      LIMIT 1;
+    `;
+
+    const values = [fechaInicio, fechaFin, idCancha];
+    const { rows } = await pool.query(query, values);
+
+    return rows[0] || { hora: '-', reservas: 0 };
+  },
+  obtenerRentabilidadServicios: async (
+    fechaInicio: string,
+    fechaFin: string
+  ) => {
+    const query = `
+      SELECT
+        s.nombre AS servicio,
+        COUNT(*)::int AS cantidad,
+        COALESCE(SUM(es.costo_contratado), 0)::numeric(10,2) AS ingresos
+      FROM evento_servicio es
+      INNER JOIN servicio s
+        ON es.id_servicio = s.id_servicio
+      INNER JOIN evento e
+        ON es.id_evento = e.id_evento
+      WHERE e.fecha_evento >= $1::date
+        AND e.fecha_evento < ($2::date + INTERVAL '1 day')
+      GROUP BY s.id_servicio, s.nombre
+      ORDER BY ingresos DESC;
+    `;
+
+    const values = [fechaInicio, fechaFin];
+    const { rows } = await pool.query(query, values);
+
+    return rows;
   }
+
 }

@@ -3,7 +3,7 @@ import { defaultRangeDate } from "../utils/formatDate";
 import api from "../services/api";
 import { DonaMetricas, MetodoPagoMetrica } from "../components/canchas/reportes/ReportesPagosGrafica";
 import { MapaOcupacionCanchas } from "../components/canchas/reportes/ReportesHeatMap";
-
+import { ReportesRentabilidad } from "../components/canchas/reportes/ReportesRentabilidad";
 
 interface ReportPagos {
   estado: string;
@@ -41,8 +41,9 @@ const Reportes = () => {
 
   // estado para controlar la tarjeta activa
 
-  const [tabActive, setTabActive] = useState<'ocupacion' | 'finanzas' | 'usuarios'>('ocupacion');
-
+  const [tabActive, setTabActive] = useState<
+  'ocupacion' | 'finanzas' | 'rentabilidad' | 'usuarios'
+>('ocupacion');
   return (
     <div className="space-y-6">
       <div className="bg-claro-tarjeta dark:bg-oscuro-tarjeta p-5 rounded-2xl border border-claro-borde dark:border-oscuro-borde shadow-sm transition-colors mb-6">
@@ -99,8 +100,18 @@ const Reportes = () => {
           >
             Reporte de finanzas
           </button>
-
-          {/* Pestaña 3: Usuarios */}
+           {/* Pestaña 3: Reporte de rentabilidad */}
+          <button
+            onClick={() => setTabActive('rentabilidad')}
+            className={`px-4 py-2 rounded-xl text-sm font-medium ${
+              tabActive === 'rentabilidad'
+                ? 'bg-blue-600 text-white'
+                : 'text-claro-texto2 dark:text-oscuro-texto2'
+            }`}
+          >
+            Rentabilidad
+          </button>
+          {/* Pestaña 4: Usuarios */}
           <button
             onClick={() => setTabActive('usuarios')}
             className={`flex-1 sm:flex-initial text-sm font-medium px-5 py-2.5 rounded-xl transition-colors ${tabActive === 'usuarios'
@@ -172,7 +183,12 @@ const Reportes = () => {
         )
       )
       }
-
+      {tabActive === 'rentabilidad' && (
+        <ReportesRentabilidad
+          fechaInicio={fechaInicio}
+          fechaFin={fechaFin}
+        />
+      )}
       {
         tabActive === 'usuarios' && (
           <div>
