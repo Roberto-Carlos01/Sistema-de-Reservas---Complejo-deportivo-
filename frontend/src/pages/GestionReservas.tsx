@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import ModalReserva from '../components/canchas/ModalReserva';
 import ModalModificarReserva from '../components/canchas/ModalModificarReserva';
+import ModalCancelarReserva from '../components/canchas/ModalCancelarReserva';
 
 const GestionReservas = () => {
     const [reservas, setReservas] = useState<any[]>([]);
@@ -10,6 +11,11 @@ const GestionReservas = () => {
     const [modalOpen, setModalOpen] = useState(false);
     const [reservaAEditar, setReservaAEditar] = useState<any>(null);
     const [isModificarModalOpen, setIsModificarModalOpen] = useState(false);
+    
+    // Nuevos estados para el modal de cancelación
+    const [isCancelarModalOpen, setIsCancelarModalOpen] = useState(false);
+    const [reservaACancelar, setReservaACancelar] = useState<any>(null);
+    const [cancelando, setCancelando] = useState(false);
 
     const { usuario } = useAuth();
     const esAdmin = Boolean(
@@ -32,14 +38,26 @@ const GestionReservas = () => {
 
     useEffect(() => { cargarReservas(); }, []);
 
-    const cancelarReserva = async (id: number) => {
-        const motivo = prompt('Motivo de la cancelación:');
-        if (!motivo) return;
+    // Abre el modal de cancelación
+    const handleAbrirCancelar = (reserva: any) => {
+        setReservaACancelar(reserva);
+        setIsCancelarModalOpen(true);
+    };
+
+    // Confirma la cancelación con el motivo
+    const handleConfirmarCancelar = async (motivo: string) => {
+        if (!reservaACancelar) return;
+        
+        setCancelando(true);
         try {
-            await api.put(`/reservas/${id}/cancelar`, { motivo });
+            await api.put(`/reservas/${reservaACancelar.id_reserva}/cancelar`, { motivo });
+            setIsCancelarModalOpen(false);
+            setReservaACancelar(null);
             cargarReservas();
         } catch (error: any) {
-            alert(error.response?.data?.message || 'Error al cancelar');
+            alert(error.response?.data?.message || 'Error al cancelar la reserva');
+        } finally {
+            setCancelando(false);
         }
     };
 
@@ -73,46 +91,47 @@ const GestionReservas = () => {
                         </tr>
                     </thead>
                     <tbody className="text-claro-texto dark:text-oscuro-texto">
-                        {reservas.map((r) => (
-                            <tr key={r.id_reserva} className="border-t border-claro-borde dark:border-oscuro-borde">
-                                <td className="p-3">{r.cliente_nombre} {r.apellido_paterno}</td>
-                                <td className="p-3">{r.cancha_nombre}</td>
-                                <td className="p-3">{new Date(r.fecha_reserva).toLocaleDateString()}</td>
-                                <td className="p-3">{r.hora_inicio} - {r.hora_fin}</td>
-                                <td className="p-3">
-                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                        r.estado === 'confirmada' ? 'bg-green-100 text-green-700' :
-                                        r.estado === 'pendiente' || r.estado === 'pendiente_pago' ? 'bg-yellow-100 text-yellow-700' :
-                                        'bg-red-100 text-red-700'
-                                    }`}>
-                                        {r.estado === 'pendiente_pago' ? 'Pendiente de Pago' : r.estado}
-                                    </span>
-                                </td>
-                                <td className="p-3">
-                                    <div className="flex gap-2 flex-wrap">
-                                        {/* Modificar - Azul (Solo Admin) */}
-                                        {esAdmin && (
-                                            <button onClick={() => handleModificar(r)}
-                                                className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-colors shadow-sm">
-                                                ✎ Modificar
-                                            </button>
-                                        )}
+    {reservas.map((r) => (
+        <tr key={r.id_reserva} className="border-t border-claro-borde dark:border-oscuro-borde">
+            <td className="p-3" data-label="Cliente">{r.cliente_nombre} {r.apellido_paterno}</td>
+            <td className="p-3" data-label="Cancha">{r.cancha_nombre}</td>
+            <td className="p-3" data-label="Fecha">{new Date(r.fecha_reserva).toLocaleDateString()}</td>
+            <td className="p-3" data-label="Horario">{r.hora_inicio} - {r.hora_fin}</td>
+            <td className="p-3" data-label="Estado">
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    r.estado === 'confirmada' ? 'bg-green-100 text-green-700' :
+                    r.estado === 'pendiente' || r.estado === 'pendiente_pago' ? 'bg-yellow-100 text-yellow-700' :
+                    'bg-red-100 text-red-700'
+                }`}>
+                    {r.estado === 'pendiente_pago' ? 'Pendiente de Pago' : r.estado}
+                </span>
+            </td>
+            <td className="p-3" data-label="Acciones">
+                <div className="flex gap-2 flex-wrap">
+                    {/* Modificar - Azul (Solo Admin) */}
+                    {esAdmin && (
+                        <button onClick={() => handleModificar(r)}
+                            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-colors shadow-sm">
+                            ✎ Modificar
+                        </button>
+                    )}
 
-                                        {/* Cancelar - Rojo */}
-                                        {r.estado !== 'cancelada' && (
-                                            <button onClick={() => cancelarReserva(r.id_reserva)}
-                                                className="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-xs font-semibold rounded-lg transition-colors shadow-sm">
-                                                ✕ Cancelar
-                                            </button>
-                                        )}
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
+                    {/* Cancelar - Rojo (abre el modal) */}
+                    {r.estado !== 'cancelada' && (
+                        <button onClick={() => handleAbrirCancelar(r)}
+                            className="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-xs font-semibold rounded-lg transition-colors shadow-sm">
+                            ✕ Cancelar
+                        </button>
+                    )}
+                </div>
+            </td>
+        </tr>
+    ))}
+</tbody>
                 </table>
             </div>
 
+            {/* Modal para crear reserva presencial */}
             <ModalReserva
                 isOpen={modalOpen}
                 onClose={() => setModalOpen(false)}
@@ -121,6 +140,7 @@ const GestionReservas = () => {
                 cancha={null}
             />
 
+            {/* Modal para modificar reserva */}
             {isModificarModalOpen && (
                 <ModalModificarReserva
                     isOpen={isModificarModalOpen}
@@ -129,6 +149,18 @@ const GestionReservas = () => {
                     reserva={reservaAEditar}
                 />
             )}
+
+            {/* Modal para cancelar reserva (NUEVO) */}
+            <ModalCancelarReserva
+                isOpen={isCancelarModalOpen}
+                onClose={() => {
+                    setIsCancelarModalOpen(false);
+                    setReservaACancelar(null);
+                }}
+                onConfirm={handleConfirmarCancelar}
+                reserva={reservaACancelar}
+                cargando={cancelando}
+            />
         </div>
     );
 };
