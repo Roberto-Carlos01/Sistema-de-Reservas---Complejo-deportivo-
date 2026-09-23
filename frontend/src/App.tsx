@@ -23,6 +23,7 @@ import DisponibilidadCancha from './pages/DisponibilidadCancha';
 import EventosPage from './pages/EventosPage';
 import GestionEventos from './pages/GestionEventos';
 import MisInscripciones from './pages/MisInscripciones';
+import Reportes from './pages/Reportes';
 
 function App() {
   return (
@@ -30,38 +31,38 @@ function App() {
       <Routes>
         {/* 1. Página Principal Pública (Landing Page con Hero, Canchas y Servicios) */}
         <Route path="/" element={<Home />} />
-        
+
         {/* 2. Rutas Públicas de Autenticación */}
         <Route path="/login" element={<Login />} />
         <Route path="/registro" element={<Registro />} />
         <Route path="/solicitar-recuperacion" element={<SolicitarRecuperacion />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-        
+
         {/* 3. Rutas Privadas (Protegidas por AuthContext y envueltas con el Sidebar del Panel) */}
         <Route element={<RutasProtegidas />}>
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/canchas" element={<CanchasPage />} />
-            <Route path="/canchas/:id/reservar" element={<DisponibilidadCancha />} />
-            <Route path="/panel-admin" element={<PanelAdmin />} />
-            <Route path="/perfil" element={<Perfil />} />
-            
-            {/* --- RUTAS DE RESERVAS --- */}
-            {/* Cliente: Ver sus propias reservas */}
-            <Route path="/reservas" element={<MisReservas />} />
-            
-            {/* Empleado/Admin: Ver y gestionar todas las reservas */}
-            <Route path="/gestion-reservas" element={<GestionReservas />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/canchas" element={<CanchasPage />} />
+          <Route path="/canchas/:id/reservar" element={<DisponibilidadCancha />} />
+          <Route path="/panel-admin" element={<PanelAdmin />} />
+          <Route path="/perfil" element={<Perfil />} />
 
-            {/* Admin/Empleado: Verificar pagos */}
-            <Route path="/verificar-pagos" element={<VerificarPagos />} />
+          {/* --- RUTAS DE RESERVAS --- */}
+          {/* Cliente: Ver sus propias reservas */}
+          <Route path="/reservas" element={<MisReservas />} />
 
-            {/* --- RUTAS DE EVENTOS --- */}
-            <Route path="/eventos" element={<EventosPage />} />
-            <Route path="/mis-inscripciones" element={<MisInscripciones />} />
-            <Route path="/gestion-eventos" element={<GestionEventos />} />
+          {/* Empleado/Admin: Ver y gestionar todas las reservas */}
+          <Route path="/gestion-reservas" element={<GestionReservas />} />
 
-            {/* Módulos futuros */}
-            <Route path="/reportes" element={<div className="p-6 text-claro-texto dark:text-oscuro-texto bg-claro-tarjeta dark:bg-oscuro-tarjeta rounded-xl border border-claro-borde dark:border-oscuro-borde">Módulo de Reportes (Iteración 6 en desarrollo)...</div>} />
+          {/* Admin/Empleado: Verificar pagos */}
+          <Route path="/verificar-pagos" element={<VerificarPagos />} />
+
+          {/* --- RUTAS DE EVENTOS --- */}
+          <Route path="/eventos" element={<EventosPage />} />
+          <Route path="/mis-inscripciones" element={<MisInscripciones />} />
+          <Route path="/gestion-eventos" element={<GestionEventos />} />
+
+          {/* Módulos futuros */}
+          <Route path="/reportes" element={<Reportes />} />
         </Route>
 
         {/* 4. Redirección por defecto ante rutas desconocidas */}

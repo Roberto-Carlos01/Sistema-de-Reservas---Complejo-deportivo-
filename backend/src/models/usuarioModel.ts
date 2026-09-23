@@ -2,7 +2,7 @@
  * ============================================================================
  * ARCHIVO: usuarioModel.ts
  * CAPA: Modelo de Acceso a Datos (PostgreSQL SQL Puro)
- * ADAPTACIÓN: Esquema relacional oficial (script-dabase.sql y seeders.sql)
+ * ADAPTACIÓN: Esquema relacional oficial (script-database.sql y seeders.sql)
  * ============================================================================
  */
 
@@ -23,7 +23,6 @@ export interface UsuarioData {
     calle?: string | null;
     zona?: string | null;
     ciudad?: string | null;
-    foto_url?: string | null;
     rol?: string;
 }
 
@@ -51,7 +50,6 @@ export interface UsuarioResponse {
     ci_nit?: string | null;
     estado_cuenta?: string;
     fecha_registro?: Date | string;
-    foto_url?: string | null;
     fecha_nacimiento?: Date | string | null;
     calle?: string | null;
     zona?: string | null;
@@ -278,12 +276,6 @@ const UsuarioModel = {
             if (datosUpdate.contraseña) {
                 queryUsuario += `, contrasena = $${contador}`;
                 valuesUsuario.push(datosUpdate.contraseña);
-                contador++;
-            }
-
-            if (datosUpdate.foto_url !== undefined) {
-                queryUsuario += `, foto_url = $${contador}`;
-                valuesUsuario.push(datosUpdate.foto_url);
                 contador++;
             }
 

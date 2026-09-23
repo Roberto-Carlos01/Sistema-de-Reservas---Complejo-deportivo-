@@ -168,7 +168,7 @@ const login = async (req: Request, res: Response) => {
             return res.status(403).json({ error: 'Tu cuenta ha sido desactivada' });
         }
 
-        // Validación extra de seguridad para TypeScript (asegura que la BD trajo la contraseña)
+        // Validación extra de seguridad para TypeScript
         if (!usuario.contraseña) {
             return res.status(401).json({ error: 'Credenciales inválidas' });
         }
@@ -179,8 +179,7 @@ const login = async (req: Request, res: Response) => {
         } else {
             // Compatibilidad para usuarios precargados en seeders.sql
             contraseñaValida = (
-                contraseña === usuario.contraseña || 
-                contraseña === '123456' || 
+                contraseña === usuario.contraseña ||
                 usuario.contraseña.startsWith('hash_pass_')
             );
         }
@@ -316,7 +315,6 @@ const validarToken = async (req: Request, res: Response) => {
             return res.status(404).json({ error: 'Token inválido' });
         }
 
-        // Validación de fecha para evitar errores de TypeScript si el valor es nulo
         if (!usuario.fecha_expiracion_token || new Date() > new Date(usuario.fecha_expiracion_token)) {
             return res.status(400).json({ error: 'El token ha expirado' });
         }
@@ -353,7 +351,6 @@ const resetPassword = async (req: Request, res: Response) => {
             return res.status(404).json({ error: 'Token inválido o ya utilizado' });
         }
 
-        // Validación de fecha para evitar errores de TypeScript
         if (!usuario.fecha_expiracion_token || new Date() > new Date(usuario.fecha_expiracion_token)) {
             return res.status(400).json({ error: 'El token ha expirado. Solicitá uno nuevo.' });
         }

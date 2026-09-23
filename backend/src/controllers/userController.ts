@@ -7,11 +7,10 @@ import UsuarioModel from '../models/usuarioModel';
 import {
     validarDatosUsuario,
     validarDatosCliente,
-    esContraseñaSegura,
-    esCorreoValido
+    esContraseñaSegura
 } from '../utils/validaciones';
 
-// INTERFAZ PERSONALIZADA PARA REQUEST (Para reconocer req.usuario y req.file)
+// INTERFAZ PERSONALIZADA PARA REQUEST (Para reconocer req.usuario)
 interface AuthRequest extends Request {
     usuario?: {
         id_usuario: number;
@@ -19,7 +18,6 @@ interface AuthRequest extends Request {
         correo: string;
         rol: string;
     };
-    file?: Express.Multer.File;
 }
 
 // LISTAR USUARIOS
@@ -87,7 +85,7 @@ const obtenerPerfil = async (req: AuthRequest, res: Response) => {
     }
 };
 
-// ACTUALIZAR PERFIL (datos + foto + contraseña)
+// ACTUALIZAR PERFIL (datos + contraseña)
 const actualizarPerfil = async (req: AuthRequest, res: Response) => {
     const id_usuario = req.usuario?.id_usuario;
 
@@ -117,15 +115,22 @@ const actualizarPerfil = async (req: AuthRequest, res: Response) => {
             return res.status(404).json({ error: 'Usuario no encontrado' });
         }
 
-        // VALIDACIONES
+        //  FLAG DE ROL (normalizado)
+        const rolUsuario = (usuarioActual.rol || '').toLowerCase().trim();
+        const esCliente = rolUsuario === 'cliente';
+
+        // VALIDACIONES COMUNES (aplican a todos los roles)
         const validacionUsuario = validarDatosUsuario({ nombre, paterno, materno, correo, telefono });
         if (!validacionUsuario.valido) {
             return res.status(400).json({ error: validacionUsuario.error });
         }
 
-        const validacionCliente = validarDatosCliente({ ci_nit, fecha_nacimiento, calle, zona, ciudad });
-        if (!validacionCliente.valido) {
-            return res.status(400).json({ error: validacionCliente.error });
+        //  Validar campos de cliente SOLO si el usuario es Cliente
+        if (esCliente) {
+            const validacionCliente = validarDatosCliente({ ci_nit, fecha_nacimiento, calle, zona, ciudad });
+            if (!validacionCliente.valido) {
+                return res.status(400).json({ error: validacionCliente.error });
+            }
         }
 
         let hashNuevaContra = undefined;
@@ -156,27 +161,24 @@ const actualizarPerfil = async (req: AuthRequest, res: Response) => {
             hashNuevaContra = await bcrypt.hash(passwordNueva, 10);
         }
 
-        let foto_url = usuarioActual.foto_url || null;
-
-        // Leer la foto de Multer usando la interfaz AuthRequest
-        if (req.file) {
-            foto_url = `/uploads/perfiles/${req.file.filename}`;
-        }
-
-        const datosUpdate = {
+        //  Construir datos a actualizar (base común)
+        const datosUpdate: any = {
             nombre: nombre.trim(),
             paterno: paterno.trim(),
             materno: materno?.trim() || null,
             correo: correo.toLowerCase().trim(),
             telefono: String(telefono).trim(),
-            contraseña: hashNuevaContra,
-            foto_url,
-            ci_nit: ci_nit ? String(ci_nit).trim() : null,
-            fecha_nacimiento: fecha_nacimiento || null,
-            calle: calle?.trim() || null,
-            zona: zona?.trim() || null,
-            ciudad: ciudad?.trim() || null
+            contraseña: hashNuevaContra
         };
+
+        //  Solo incluir campos de cliente si ES cliente
+        if (esCliente) {
+            datosUpdate.ci_nit = ci_nit ? String(ci_nit).trim() : null;
+            datosUpdate.fecha_nacimiento = fecha_nacimiento || null;
+            datosUpdate.calle = calle?.trim() || null;
+            datosUpdate.zona = zona?.trim() || null;
+            datosUpdate.ciudad = ciudad?.trim() || null;
+        }
 
         const usuarioActualizado = await UsuarioModel.actualizarPerfil(id_usuario, datosUpdate);
 
@@ -230,6 +232,13 @@ const crearUsuario = async (req: Request, res: Response) => {
             return res.status(400).json({ error: 'Rol inválido.' });
         }
 
+        //  FLAG DE ROL
+        const rolNorm = rol.toLowerCase().trim();
+        const esCliente = rolNorm === 'cliente';
+        const esEmpleado = rolNorm === 'empleado';
+        const esAdmin = rolNorm === 'admin' || rolNorm === 'administrador';
+
+        // VALIDACIONES COMUNES
         const validacionUsuario = validarDatosUsuario({ nombre, paterno, materno, correo, telefono });
         if (!validacionUsuario.valido) {
             return res.status(400).json({ error: validacionUsuario.error });
@@ -247,19 +256,23 @@ const crearUsuario = async (req: Request, res: Response) => {
             return res.status(400).json({ error: 'El correo ya está registrado' });
         }
 
-        const validacionCliente = validarDatosCliente({ ci_nit, fecha_nacimiento, calle, zona, ciudad });
-        if (!validacionCliente.valido) {
-            return res.status(400).json({ error: validacionCliente.error });
-        }
+        //  Validar campos de cliente SOLO si el rol es Cliente
+        if (esCliente) {
+            const validacionCliente = validarDatosCliente({ ci_nit, fecha_nacimiento, calle, zona, ciudad });
+            if (!validacionCliente.valido) {
+                return res.status(400).json({ error: validacionCliente.error });
+            }
 
-        if (ci_nit) {
-            const ciExistente = await UsuarioModel.obtenerPorCiNit(ci_nit);
-            if (ciExistente) {
-                return res.status(400).json({ error: 'El CI/NIT ya está registrado' });
+            if (ci_nit) {
+                const ciExistente = await UsuarioModel.obtenerPorCiNit(ci_nit);
+                if (ciExistente) {
+                    return res.status(400).json({ error: 'El CI/NIT ya está registrado' });
+                }
             }
         }
 
-        if (rol === 'Empleado') {
+        //  Validar campos de empleado SOLO si el rol es Empleado
+        if (esEmpleado) {
             if (!fecha_contratacion) return res.status(400).json({ error: 'La fecha de contratación es obligatoria.' });
             if (!cargo || !cargo.trim()) return res.status(400).json({ error: 'El cargo es obligatorio.' });
             if (cargo.trim().length < 3 || cargo.trim().length > 100) {
@@ -270,7 +283,8 @@ const crearUsuario = async (req: Request, res: Response) => {
             }
         }
 
-        if (rol === 'Admin' || rol === 'Administrador') {
+        //  Validar campos de admin SOLO si el rol es Admin
+        if (esAdmin) {
             if (nivel_acceso && !['Total', 'Medio', 'Bajo'].includes(nivel_acceso)) {
                 return res.status(400).json({ error: 'Nivel de acceso inválido.' });
             }
@@ -341,6 +355,12 @@ const actualizarUsuario = async (req: Request, res: Response) => {
             return res.status(400).json({ error: 'Rol inválido.' });
         }
 
+        //  FLAG DE ROL
+        const rolNorm = rol.toLowerCase().trim();
+        const esCliente = rolNorm === 'cliente';
+        const esEmpleado = rolNorm === 'empleado';
+        const esAdmin = rolNorm === 'admin' || rolNorm === 'administrador';
+
         const validacionUsuario = validarDatosUsuario({ nombre, paterno, materno, correo, telefono });
         if (!validacionUsuario.valido) return res.status(400).json({ error: validacionUsuario.error });
 
@@ -356,17 +376,22 @@ const actualizarUsuario = async (req: Request, res: Response) => {
             return res.status(400).json({ error: 'Estado inválido.' });
         }
 
-        const validacionCliente = validarDatosCliente({ ci_nit, fecha_nacimiento, calle, zona, ciudad });
-        if (!validacionCliente.valido) return res.status(400).json({ error: validacionCliente.error });
+        //  Validar campos de cliente SOLO si el rol es Cliente
+        if (esCliente) {
+            const validacionCliente = validarDatosCliente({ ci_nit, fecha_nacimiento, calle, zona, ciudad });
+            if (!validacionCliente.valido) return res.status(400).json({ error: validacionCliente.error });
+        }
 
-        if (rol === 'Empleado') {
+        //  Validar campos de empleado SOLO si el rol es Empleado
+        if (esEmpleado) {
             if (!fecha_contratacion) return res.status(400).json({ error: 'La fecha de contratación es obligatoria.' });
             if (!cargo || !cargo.trim()) return res.status(400).json({ error: 'El cargo es obligatorio.' });
             if (cargo.trim().length < 3 || cargo.trim().length > 100) return res.status(400).json({ error: 'El cargo debe tener entre 3 y 100 caracteres.' });
             if (turno && !['Mañana', 'Tarde', 'Noche'].includes(turno)) return res.status(400).json({ error: 'Turno inválido.' });
         }
 
-        if (rol === 'Admin' || rol === 'Administrador') {
+        //  Validar campos de admin SOLO si el rol es Admin
+        if (esAdmin) {
             if (nivel_acceso && !['Total', 'Medio', 'Bajo'].includes(nivel_acceso)) {
                 return res.status(400).json({ error: 'Nivel de acceso inválido.' });
             }
@@ -385,15 +410,15 @@ const actualizarUsuario = async (req: Request, res: Response) => {
         };
 
         const rolData = {
-            ci_nit: ci_nit ? String(ci_nit).trim() : null,
-            fecha_nacimiento: fecha_nacimiento || null,
-            calle: calle?.trim() || null,
-            zona: zona?.trim() || null,
-            ciudad: ciudad?.trim() || null,
-            fecha_contratacion: fecha_contratacion || null,
-            cargo: cargo?.trim() || null,
-            turno: turno || null,
-            nivel_acceso: nivel_acceso || 'Total'
+            ci_nit: esCliente && ci_nit ? String(ci_nit).trim() : null,
+            fecha_nacimiento: esCliente ? (fecha_nacimiento || null) : null,
+            calle: esCliente ? (calle?.trim() || null) : null,
+            zona: esCliente ? (zona?.trim() || null) : null,
+            ciudad: esCliente ? (ciudad?.trim() || null) : null,
+            fecha_contratacion: esEmpleado ? (fecha_contratacion || null) : null,
+            cargo: esEmpleado ? (cargo?.trim() || null) : null,
+            turno: esEmpleado ? (turno || null) : null,
+            nivel_acceso: esAdmin ? (nivel_acceso || 'Total') : null
         };
 
         await UsuarioModel.actualizarUsuario(id, usuarioData, rolData);

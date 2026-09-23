@@ -29,6 +29,9 @@ import reservaRoutes from './routes/reserva.routes';
 import pagoRoutes from './routes/pago.routes';
 import eventoRoutes from './routes/evento.routes';
 
+// reportes
+import reportesRoutes from './routes/reportes.routes';
+
 
 // ============================================================================
 // INICIALIZACIÓN DE EXPRESS
@@ -98,6 +101,9 @@ app.use('/api/pagos', pagoRoutes);
 
 // Gestión de eventos y servicios sociales
 app.use('/api/eventos', eventoRoutes);
+
+// Reportes
+app.use('/api/reportes', reportesRoutes);
 // ============================================================================
 // RUTA PRINCIPAL
 // ============================================================================
