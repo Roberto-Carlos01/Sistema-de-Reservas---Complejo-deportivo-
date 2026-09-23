@@ -139,7 +139,6 @@ export const ReportesController = {
 
   obtenerComportamientoUsuarios: async (req: Request, res: Response) => {
     try {
-      // Si envías por POST usa req.body. Si usas GET cámbialo por req.query
       const { fechaInicio, fechaFin } = req.body;
 
       if (!fechaInicio || !fechaFin) {
