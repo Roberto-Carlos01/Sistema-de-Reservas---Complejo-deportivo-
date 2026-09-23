@@ -1,4 +1,3 @@
-
 -- =========================================================
 -- DATOS DE PRUEBA (fechas simuladas, no reales)
 -- =========================================================
@@ -25,6 +24,7 @@ INSERT INTO usuario (id_usuario, nombre, apellido_paterno, apellido_materno, cor
 (18,'Gabriela','Mercado','Sainz','gabriela.mercado@gmail.com','76001131','$2a$12$SYkWhr2bVMvKyYplaVy.VeNLKFFtY6tMDp6E9MmPp2Rzqb7qgM2RO','2026-02-10 12:00:00','activo'),
 (19,'Ricardo','Escobar','Tapia','ricardo.escobar@gmail.com','76001132','$2a$12$SYkWhr2bVMvKyYplaVy.VeNLKFFtY6tMDp6E9MmPp2Rzqb7qgM2RO','2026-02-11 12:30:00','activo'),
 (20,'Paola','Duran','Vega','paola.duran@gmail.com','76001133','$2a$12$SYkWhr2bVMvKyYplaVy.VeNLKFFtY6tMDp6E9MmPp2Rzqb7qgM2RO','2026-02-12 13:00:00','inactivo');
+
 -- ---------- SUBTIPOS ----------
 INSERT INTO administrador (id_administrador, nivel_acceso, fecha_asignacion_cargo) VALUES
 (1,'total','2026-01-10'),
@@ -88,11 +88,15 @@ INSERT INTO evento (id_evento, nombre_evento, descripcion, fecha_evento, hora_in
 (4,'Clase Abierta de Padel','Clase gratuita de introduccion al padel','2026-10-08','17:00','19:00',16,'exhibicion','programado',11,'2026-09-06 10:00:00'),
 (5,'Maraton 5K Interna','Carrera recreativa dentro del complejo','2026-11-02','07:00','10:00',100,'recreativo','programado',1,'2026-09-08 08:30:00');
 
-INSERT INTO evento (id_evento, nombre_evento, descripcion, fecha_evento, hora_inicio, hora_fin, cupo_maximo, tipo_evento, motivo_cancelacion, fecha_cancelacion, estado, id_administrador, fecha_creacion) VALUES
-(6,'Torneo de Voley Playero','Torneo de voley en cancha techada','2026-10-25','10:00','16:00',24,'torneo','Falta de equipos inscritos suficientes','2026-09-15 12:00:00','cancelado',2,'2026-09-09 09:00:00');
+-- FIX: se agrega id_usuario_cancelacion (quien ejecutó la cancelación) al evento
+-- cancelado. Antes faltaba en la lista de columnas y quedaba NULL pese a tener
+-- motivo_cancelacion y fecha_cancelacion ya registrados -> inconsistente para
+-- trazabilidad. Se asume que fue el administrador 2 (mismo id_administrador
+-- del evento) quien realizó la cancelación.
+INSERT INTO evento (id_evento, nombre_evento, descripcion, fecha_evento, hora_inicio, hora_fin, cupo_maximo, tipo_evento, motivo_cancelacion, fecha_cancelacion, id_usuario_cancelacion, estado, id_administrador, fecha_creacion) VALUES
+(6,'Torneo de Voley Playero','Torneo de voley en cancha techada','2026-10-25','10:00','16:00',24,'torneo','Falta de equipos inscritos suficientes','2026-09-15 12:00:00',2,'cancelado',2,'2026-09-09 09:00:00');
 
 -- ---------- RESERVA ----------
-
 INSERT INTO reserva (id_reserva, fecha_solicitud, estado, fecha_reserva, canal_reserva, hora_inicio, hora_fin, id_cliente, id_cancha, id_empleado, fecha_gestion, observaciones) VALUES
 (1,'2026-09-19 10:00:00','confirmada','2026-09-20','en_linea','18:00','19:00',6,1,3,'2026-09-19 20:00:00','Confirmada sin observaciones'),
 (2,'2026-09-20 08:00:00','confirmada','2026-09-21','presencial','10:00','11:00',7,2,4,'2026-09-20 09:00:00',NULL),
@@ -128,6 +132,18 @@ INSERT INTO pago (id_pago, monto, metodo_pago, fecha_pago, tipo_registro, refere
 (14,80.00,'qr','2026-09-29 09:05:00','automatico','PAS-0009','CMP-0014','pagado',14),
 (15,50.00,'tarjeta','2026-09-29 18:05:00','automatico','PAS-0010','CMP-0015','pagado',15);
 
+-- ---------- EVENTO_CANCHA ----------
+-- Sin estas filas, evento.cancha_asignada llega vacío al frontend
+-- (GestionEventos/EventosPage no muestran cancha, el costo de cancha
+-- del evento queda en 0, y el filtro por cancha no funciona).
+INSERT INTO evento_cancha (id_evento, id_cancha) VALUES
+(1, 1),
+(2, 3),
+(3, 2),
+(4, 5),
+(5, 7),
+(6, 3);
+
 -- =========================================================
 -- DATOS DE PRUEBA PARA REPORTE DE RENTABILIDAD
 -- =========================================================
@@ -155,6 +171,30 @@ INSERT INTO evento_servicio
 VALUES
 (7, 1, 150.00),
 (7, 2, 300.00);
+
+-- El evento 7 también necesita su cancha asignada, igual que los demás
+INSERT INTO evento_cancha (id_evento, id_cancha) VALUES
+(7, 1);
+
+-- =========================================================
+-- INSCRIPCIONES DE PRUEBA (para probar cupos_restantes, MisInscripciones,
+-- y la cancelación en cascada de evento -> inscripciones)
+-- =========================================================
+INSERT INTO inscripcion (id_cliente, id_evento, fecha_inscripcion, estado) VALUES
+(6,1,'2026-09-10 09:00:00','confirmada'),
+(7,1,'2026-09-10 09:15:00','confirmada'),
+(15,1,'2026-09-11 10:00:00','confirmada'),
+(8,2,'2026-09-11 11:00:00','confirmada'),
+(9,3,'2026-09-12 12:00:00','confirmada'),
+(16,3,'2026-09-12 12:30:00','confirmada'),
+(10,4,'2026-09-13 08:00:00','confirmada'),
+(14,5,'2026-09-13 09:00:00','confirmada'),
+(17,7,'2026-09-13 10:00:00','confirmada'),
+(18,7,'2026-09-13 10:15:00','confirmada');
+
+-- Un ejemplo de inscripción cancelada por el propio cliente (no por el evento)
+INSERT INTO inscripcion (id_cliente, id_evento, fecha_inscripcion, estado, fecha_cancelacion) VALUES
+(19,2,'2026-09-11 12:00:00','cancelada','2026-09-14 08:00:00');
 
 -- =========================================================
 -- SINCRONIZAR SECUENCIAS CON LOS IDs INSERTADOS
