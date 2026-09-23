@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import IconCanchas from '../assets/icon_canchas.svg?react';
 
@@ -108,14 +108,24 @@ const Navbar = ({ abierto, onCerrar }: NavbarProps) => {
                 ${abierto ? 'translate-x-0' : '-translate-x-full'} 
                 md:translate-x-0
             `}>
-                <div className="flex items-center gap-3 px-6 py-8">
+                <Link 
+                    to="/" 
+                    onClick={onCerrar}
+                    className="flex items-center gap-3 px-6 py-6 border-b border-claro-borde/60 dark:border-oscuro-borde/60 hover:opacity-90 transition-opacity"
+                    title="Ir a la página principal / Home"
+                >
                     <IconCanchas className="w-9 h-9" />
-                    <span className="text-xl font-bold text-claro-texto dark:text-oscuro-texto tracking-tight">
-                        CanchasDeportivas
-                    </span>
-                </div>
+                    <div className="flex flex-col">
+                        <span className="text-xl font-bold text-claro-texto dark:text-oscuro-texto tracking-tight leading-none">
+                            SportPlex
+                        </span>
+                        <span className="text-xs text-claro-texto2 dark:text-oscuro-texto2 mt-1">
+                            Complejo Deportivo
+                        </span>
+                    </div>
+                </Link>
 
-                <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
+                <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
                     {menuFiltrado.map((item) => (
                         <NavLink 
                             key={item.name} 
@@ -124,7 +134,7 @@ const Navbar = ({ abierto, onCerrar }: NavbarProps) => {
                             className={({ isActive }) => `
                                 flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 
                                 ${isActive 
-                                    ? 'bg-claro-tinte text-claro-primario dark:bg-oscuro-tinte dark:text-oscuro-primario' 
+                                    ? 'bg-claro-tinte text-claro-primario dark:bg-oscuro-tinte dark:text-oscuro-primario font-semibold shadow-sm' 
                                     : 'text-claro-texto2 hover:bg-gray-50 hover:text-claro-texto dark:text-oscuro-texto2 dark:hover:bg-oscuro-fondo dark:hover:text-oscuro-texto'
                                 }
                             `}
@@ -136,6 +146,20 @@ const Navbar = ({ abierto, onCerrar }: NavbarProps) => {
                         </NavLink>
                     ))}
                 </nav>
+
+                {/* Footer del Sidebar con botón directo a Home */}
+                <div className="p-4 border-t border-claro-borde dark:border-oscuro-borde">
+                    <Link
+                        to="/"
+                        onClick={onCerrar}
+                        className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl text-sm font-semibold text-claro-primario dark:text-oscuro-primario bg-claro-tinte/60 hover:bg-claro-tinte dark:bg-oscuro-tinte/60 dark:hover:bg-oscuro-tinte border border-claro-borde dark:border-oscuro-borde transition-all"
+                    >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                        </svg>
+                        Volver al Home
+                    </Link>
+                </div>
             </aside>
         </>
     );
