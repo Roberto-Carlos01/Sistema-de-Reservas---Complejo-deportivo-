@@ -9,7 +9,7 @@
  👑 ADMINISTRADOR
 ─────────────────────────────────────────
  Correo:      jorge.fernandez@canchasbo.com
- Contraseña:  123456
+ Contraseña:  Passw123
  Permisos:    Gestión completa del sistema
               (usuarios, canchas, reservas, pagos)
 
@@ -17,14 +17,14 @@
  👑 ADMINISTRADOR (alternativo)
 ─────────────────────────────────────────
  Correo:      carla.mamani@canchasbo.com
- Contraseña:  123456
+ Contraseña:  Passw123
  Permisos:    Gestión completa del sistema
 
 ─────────────────────────────────────────
  👨‍💼 EMPLEADO
 ─────────────────────────────────────────
- Correo:      luis.choque@canchasbo.com
- Contraseña:  123456
+ Correo:      ana.torrez@canchasbo.com
+ Contraseña:  Passw123
  Permisos:    Gestión de reservas
               Verificar pagos
 
@@ -32,7 +32,7 @@
  👤 CLIENTE
 ─────────────────────────────────────────
  Correo:      maria.lopez@gmail.com
- Contraseña:  123456
+ Contraseña:  Passw123
  Permisos:    Reservar canchas
               Pagar reservas
               Ver historial
