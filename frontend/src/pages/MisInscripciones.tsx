@@ -8,7 +8,7 @@ const MisInscripciones = () => {
     const [inscripciones, setInscripciones] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [mensaje, setMensaje] = useState<{ tipo: 'exito' | 'error', texto: string } | null>(null);
-
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
     useEffect(() => {
         cargarInscripciones();
     }, []);
@@ -16,7 +16,7 @@ const MisInscripciones = () => {
     const cargarInscripciones = async () => {
         setLoading(true);
         try {
-            const res = await axios.get(`${import.meta.env.VITE_API_URL}/eventos/mis-inscripciones`, {
+            const res = await axios.get(`${apiUrl}/eventos/mis-inscripciones`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setInscripciones(res.data.data);
@@ -32,7 +32,7 @@ const MisInscripciones = () => {
         if (!window.confirm('¿Estás seguro que deseas cancelar tu inscripción a este evento?')) return;
         
         try {
-            await axios.patch(`${import.meta.env.VITE_API_URL}/eventos/${id_evento}/cancelar-inscripcion`, {}, {
+            await axios.patch(`${apiUrl}/eventos/${id_evento}/cancelar-inscripcion`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setMensaje({ tipo: 'exito', texto: 'Inscripción cancelada con éxito. Se ha liberado tu cupo.' });

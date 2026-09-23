@@ -43,6 +43,8 @@ const EventosPage = () => {
     const [filtroCancha, setFiltroCancha] = useState<string>('');
     const [mensaje, setMensaje] = useState<{ tipo: 'exito' | 'error', texto: string } | null>(null);
     const isCliente = usuario?.rol?.toLowerCase() === 'cliente';
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+
 
     useEffect(() => {
         cargarCanchas();
@@ -54,7 +56,7 @@ const EventosPage = () => {
 
     const cargarCanchas = async () => {
         try {
-            const res = await axios.get(`${import.meta.env.VITE_API_URL}/canchas`, {
+            const res = await axios.get(`${apiUrl}/canchas`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setCanchas(res.data.data);
@@ -66,7 +68,8 @@ const EventosPage = () => {
     const cargarEventos = async () => {
         setLoading(true);
         try {
-            let url = `${import.meta.env.VITE_API_URL}/eventos?disponibles=true`;
+            
+            let url = `${apiUrl}/eventos?disponibles=true`;
             if (filtroTipo) url += `&tipo=${filtroTipo}`;
             if (filtroFecha) url += `&fecha=${filtroFecha}`;
             if (filtroCancha) url += `&id_cancha=${filtroCancha}`;
@@ -90,7 +93,7 @@ const EventosPage = () => {
         }
 
         try {
-            await axios.post(`${import.meta.env.VITE_API_URL}/eventos/${id_evento}/inscribir`, {}, {
+            await axios.post(`${apiUrl}/eventos/${id_evento}/inscribir`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setMensaje({ tipo: 'exito', texto: '¡Inscripción exitosa al evento!' });

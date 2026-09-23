@@ -26,6 +26,8 @@ const GestionEventos = () => {
     };
     const [formData, setFormData] = useState(formVacio);
     const [serviciosSeleccionados, setServiciosSeleccionados] = useState<{ id_servicio: number, costo_contratado: number }[]>([]);
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+
 
     useEffect(() => {
         cargarDatos();
@@ -35,9 +37,9 @@ const GestionEventos = () => {
         setLoading(true);
         try {
             const [evRes, canchasRes, servRes] = await Promise.all([
-                axios.get(`${import.meta.env.VITE_API_URL}/eventos`, { headers: { Authorization: `Bearer ${token}` } }),
-                axios.get(`${import.meta.env.VITE_API_URL}/canchas`, { headers: { Authorization: `Bearer ${token}` } }),
-                axios.get(`${import.meta.env.VITE_API_URL}/eventos/servicios`, { headers: { Authorization: `Bearer ${token}` } })
+                axios.get(`${apiUrl}/eventos`, { headers: { Authorization: `Bearer ${token}` } }),
+                axios.get(`${apiUrl}/canchas`, { headers: { Authorization: `Bearer ${token}` } }),
+                axios.get(`${apiUrl}/eventos/servicios`, { headers: { Authorization: `Bearer ${token}` } })
             ]);
             setEventos(evRes.data.data);
             setCanchas(canchasRes.data.data);
@@ -59,12 +61,12 @@ const GestionEventos = () => {
         };
         try {
             if (modoReprogramar && eventoEnEdicion) {
-                await axios.patch(`${import.meta.env.VITE_API_URL}/eventos/${eventoEnEdicion}/reprogramar`, payload, {
+                await axios.patch(`${apiUrl}/eventos/${eventoEnEdicion}/reprogramar`, payload, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setMensaje({ tipo: 'exito', texto: 'Evento reprogramado exitosamente.' });
             } else if (eventoEnEdicion) {
-                await axios.put(`${import.meta.env.VITE_API_URL}/eventos/${eventoEnEdicion}`, payload, {
+                await axios.put(`${apiUrl}/eventos/${eventoEnEdicion}`, payload, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setMensaje({ tipo: 'exito', texto: 'Evento actualizado exitosamente.' });

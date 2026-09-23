@@ -121,6 +121,8 @@ const Perfil = () => {
         nivel_acceso: '',
         fecha_asignacion_cargo: ''
     });
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+            
 
     // =====================================================
     // CARGAR PERFIL
@@ -129,7 +131,7 @@ const Perfil = () => {
         const fetchPerfil = async (): Promise<void> => {
             try {
                 const res = await axios.get<PerfilResponse>(
-                    `${import.meta.env.VITE_API_URL}/usuarios/perfil`,
+                    `${apiUrl}/usuarios/perfil`,
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
                 const datos = res.data;

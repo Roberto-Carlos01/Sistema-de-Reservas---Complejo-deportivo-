@@ -97,7 +97,8 @@ const Login = () => {
         setCargando(true);
 
         try {
-            const respuesta = await axios.post(`${import.meta.env.VITE_API_URL}/auth/login`, {
+            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+            const respuesta = await axios.post(`${apiUrl}/auth/login`, {
                 correo: formData.correo.toLowerCase().trim(),
                 contraseña: formData.contraseña
             });

@@ -125,7 +125,8 @@ const Registro = () => {
         setCargando(true);
 
         try {
-            await axios.post(`${import.meta.env.VITE_API_URL}/auth/registrar`, {
+            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+            await axios.post(`${apiUrl}/auth/registrar`, {
                 ...formData,
                 edad
             });
