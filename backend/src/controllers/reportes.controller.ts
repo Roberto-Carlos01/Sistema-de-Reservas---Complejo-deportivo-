@@ -39,7 +39,7 @@ export const ReportesController = {
       res.status(500).json({ success: false, message: 'Error al obtener datos para el heatmap.' });
     }
   },
-    listarCanchas: async (req: Request, res: Response) => {
+  listarCanchas: async (req: Request, res: Response) => {
     try {
       const result = await ReportesModel.listarCanchas();
 
@@ -73,7 +73,7 @@ export const ReportesController = {
       });
     }
   },
-    obtenerHorasOcupadas: async (req: Request, res: Response) => {
+  obtenerHorasOcupadas: async (req: Request, res: Response) => {
     try {
       const { fechaInicio, fechaFin, idCancha } = req.body;
 
@@ -135,8 +135,34 @@ export const ReportesController = {
         message: 'Error al obtener la rentabilidad de servicios.'
       });
     }
-  }
+  },
+
+  obtenerComportamientoUsuarios: async (req: Request, res: Response) => {
+    try {
+      // Si envías por POST usa req.body. Si usas GET cámbialo por req.query
+      const { fechaInicio, fechaFin } = req.body;
+
+      if (!fechaInicio || !fechaFin) {
+        return res.status(400).json({
+          success: false,
+          message: 'Las fechas de inicio y fin son obligatorias.'
+        });
+      }
+
+      const result = await ReportesModel.obtenerComportamientoUsuarios(fechaInicio, fechaFin);
+
+      res.status(200).json({ success: true, data: result });
+    } catch (error) {
+      console.error("Error en obtenerComportamientoUsuarios:", error);
+      res.status(500).json({
+        success: false,
+        message: 'Error al obtener el reporte de comportamiento de usuarios.'
+      });
+    }
+  },
 };
+
+
 const transformarANivoHeatmap = (
   rows: { dia: string; hora: string; reservas: number }[]
 ) => {

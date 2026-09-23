@@ -4,6 +4,7 @@ import api from "../services/api";
 import { DonaMetricas, MetodoPagoMetrica } from "../components/canchas/reportes/ReportesPagosGrafica";
 import { MapaOcupacionCanchas } from "../components/canchas/reportes/ReportesHeatMap";
 import { ReportesRentabilidad } from "../components/canchas/reportes/ReportesRentabilidad";
+import { ReporteComportamiento } from "../components/canchas/reportes/ReportesComportamiento";
 
 interface ReportPagos {
   estado: string;
@@ -42,8 +43,8 @@ const Reportes = () => {
   // estado para controlar la tarjeta activa
 
   const [tabActive, setTabActive] = useState<
-  'ocupacion' | 'finanzas' | 'rentabilidad' | 'usuarios'
->('ocupacion');
+    'ocupacion' | 'finanzas' | 'rentabilidad' | 'usuarios'
+  >('ocupacion');
   return (
     <div className="space-y-6">
       <div className="bg-claro-tarjeta dark:bg-oscuro-tarjeta p-5 rounded-2xl border border-claro-borde dark:border-oscuro-borde shadow-sm transition-colors mb-6">
@@ -100,14 +101,13 @@ const Reportes = () => {
           >
             Reporte de finanzas
           </button>
-           {/* Pestaña 3: Reporte de rentabilidad */}
+          {/* Pestaña 3: Reporte de rentabilidad */}
           <button
             onClick={() => setTabActive('rentabilidad')}
-            className={`px-4 py-2 rounded-xl text-sm font-medium ${
-              tabActive === 'rentabilidad'
+            className={`px-4 py-2 rounded-xl text-sm font-medium ${tabActive === 'rentabilidad'
                 ? 'bg-blue-600 text-white'
                 : 'text-claro-texto2 dark:text-oscuro-texto2'
-            }`}
+              }`}
           >
             Rentabilidad
           </button>
@@ -191,9 +191,11 @@ const Reportes = () => {
       )}
       {
         tabActive === 'usuarios' && (
-          <div>
-            {/* Aquí va la vista de Usuarios */}
-          </div>
+          <ReporteComportamiento
+            fechaInicio={fechaInicio}
+            fechaFin={fechaFin}
+          />
+
         )
       }
 

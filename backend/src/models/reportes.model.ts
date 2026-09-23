@@ -120,7 +120,7 @@ export const ReportesModel = {
 
     return rows[0];
   },
-    obtenerHorasOcupadas: async (
+  obtenerHorasOcupadas: async (
     fechaInicio: string,
     fechaFin: string,
     idCancha: string
@@ -192,6 +192,61 @@ export const ReportesModel = {
     const { rows } = await pool.query(query, values);
 
     return rows;
+  },
+
+  obtenerComportamientoUsuarios: async (fechaInicio: string, fechaFin: string) => {
+    const clientesVipQuery = `
+    SELECT 
+      u.id_usuario AS id_cliente,
+      CONCAT(u.nombre, ' ', u.apellido_paterno, ' ', COALESCE(u.apellido_materno, '')) AS cliente,
+      u.correo,
+      u.telefono,
+      COUNT(r.id_reserva)::INTEGER AS total_reservas,
+      COALESCE(SUM(p.monto), 0)::NUMERIC AS total_gastado
+    FROM cliente c
+    JOIN usuario u ON c.id_cliente = u.id_usuario
+    JOIN reserva r ON c.id_cliente = r.id_cliente
+    LEFT JOIN pago p ON r.id_reserva = p.id_reserva AND p.estado = 'pagado'
+    WHERE r.fecha_reserva >= $1::date 
+      AND r.fecha_reserva <= $2::date
+    GROUP BY u.id_usuario, u.nombre, u.apellido_paterno, u.apellido_materno, u.correo, u.telefono
+    ORDER BY total_reservas DESC, total_gastado DESC
+    LIMIT 10;
+  `;
+
+    const metricasReservasQuery = `
+    SELECT
+      COUNT(*)::INTEGER AS total_solicitadas,
+      COUNT(*) FILTER (WHERE estado = 'confirmada')::INTEGER AS confirmadas,
+      COUNT(*) FILTER (WHERE estado = 'cancelada')::INTEGER AS canceladas,
+      COUNT(*) FILTER (WHERE estado = 'pendiente')::INTEGER AS pendientes,
+      ROUND(
+        (COUNT(*) FILTER (WHERE estado = 'cancelada')::numeric / NULLIF(COUNT(*), 0)) * 100, 2
+      )::FLOAT AS porcentaje_cancelacion
+    FROM reserva
+    WHERE fecha_reserva >= $1::date 
+      AND fecha_reserva <= $2::date;
+  `;
+
+    const nuevosRegistrosQuery = `
+    SELECT COUNT(*)::INTEGER AS nuevos_clientes
+    FROM cliente c
+    JOIN usuario u ON c.id_cliente = u.id_usuario
+    WHERE u.fecha_registro >= $1::timestamp 
+      AND u.fecha_registro <= ($2::date + INTERVAL '1 day');
+  `;
+
+    const [vipRes, metricasRes, nuevosRes] = await Promise.all([
+      pool.query(clientesVipQuery, [fechaInicio, fechaFin]),
+      pool.query(metricasReservasQuery, [fechaInicio, fechaFin]),
+      pool.query(nuevosRegistrosQuery, [fechaInicio, fechaFin])
+    ]);
+
+    return {
+      clientesVip: vipRes.rows,
+      metricas: metricasRes.rows[0],
+      nuevosClientes: nuevosRes.rows[0].nuevos_clientes
+    };
   }
 
 }

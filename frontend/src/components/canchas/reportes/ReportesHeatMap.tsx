@@ -27,7 +27,7 @@ export const MapaOcupacionCanchas: React.FC<MapaOcupacionProps> = ({ fechaInicio
   const [totalReservas, setTotalReservas] = useState<number>(0);
   const [horasOcupadas, setHorasOcupadas] = useState<number>(0);
   const [mayorDemanda, setMayorDemanda] = useState<string>('-');
-  
+
   useEffect(() => {
     const obtenerCanchas = async () => {
       const res = await api.get('/reportes/listarCanchas');
@@ -75,46 +75,46 @@ export const MapaOcupacionCanchas: React.FC<MapaOcupacionProps> = ({ fechaInicio
 
     obtenerOcupacion();
   }, [fechaInicio, fechaFin, canchaSeleccionada]);
-    const exportarCSV = () => {
-      let contenido = 'REPORTE DE OCUPACIÓN\n\n';
+  const exportarCSV = () => {
+    let contenido = 'REPORTE DE OCUPACIÓN\n\n';
 
-      contenido += `Fecha inicio,${fechaInicio}\n`;
-      contenido += `Fecha fin,${fechaFin}\n`;
+    contenido += `Fecha inicio,${fechaInicio}\n`;
+    contenido += `Fecha fin,${fechaFin}\n`;
 
-      const cancha =
-        canchaSeleccionada === 'todas'
-          ? 'Todas las canchas'
-          : canchas.find(
-              (c) => c.id_cancha.toString() === canchaSeleccionada
-            )?.nombre || 'Cancha seleccionada';
+    const cancha =
+      canchaSeleccionada === 'todas'
+        ? 'Todas las canchas'
+        : canchas.find(
+          (c) => c.id_cancha.toString() === canchaSeleccionada
+        )?.nombre || 'Cancha seleccionada';
 
-      contenido += `Cancha,${cancha}\n`;
-      contenido += `Total de reservas,${totalReservas}\n`;
-      contenido += `Horas ocupadas,${horasOcupadas}\n`;
-      contenido += `Mayor demanda,${mayorDemanda}\n\n`;
+    contenido += `Cancha,${cancha}\n`;
+    contenido += `Total de reservas,${totalReservas}\n`;
+    contenido += `Horas ocupadas,${horasOcupadas}\n`;
+    contenido += `Mayor demanda,${mayorDemanda}\n\n`;
 
-      contenido += 'Día,Hora,Reservas\n';
+    contenido += 'Día,Hora,Reservas\n';
 
-      dataHeatmap.forEach((dia) => {
-        dia.data.forEach((hora) => {
-          contenido += `${dia.id},${hora.x},${hora.y}\n`;
-        });
+    dataHeatmap.forEach((dia) => {
+      dia.data.forEach((hora) => {
+        contenido += `${dia.id},${hora.x},${hora.y}\n`;
       });
+    });
 
 
-      const archivo = new Blob([contenido], {
-        type: 'text/csv;charset=utf-8;'
-      });
+    const archivo = new Blob([contenido], {
+      type: 'text/csv;charset=utf-8;'
+    });
 
-      const url = URL.createObjectURL(archivo);
-      const enlace = document.createElement('a');
+    const url = URL.createObjectURL(archivo);
+    const enlace = document.createElement('a');
 
-      enlace.href = url;
-      enlace.download = 'reporte_ocupacion.csv';
-      enlace.click();
+    enlace.href = url;
+    enlace.download = 'reporte_ocupacion.csv';
+    enlace.click();
 
-      URL.revokeObjectURL(url);
-    };
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="bg-claro-tarjeta dark:bg-oscuro-tarjeta p-5 rounded-2xl border border-claro-borde dark:border-oscuro-borde shadow-sm transition-colors">
@@ -129,23 +129,16 @@ export const MapaOcupacionCanchas: React.FC<MapaOcupacionProps> = ({ fechaInicio
             Frecuencia de reservas según días y horas pico
           </p>
         </div>
-         <div className="flex items-center gap-2">
-            <button
-              onClick={exportarCSV}
-              className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition"
-            >
-              Exportar CSV
-            </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={exportarCSV}
+            className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition"
+          >
+            Exportar CSV
+          </button>
 
-            <label
-              htmlFor="select-cancha"
-              className="text-xs font-medium text-claro-texto2 dark:text-oscuro-texto2"
-            >
-              Cancha:
-            </label>
-
-            {/* select de cancha */}
-          </div>
+          {/* select de cancha */}
+        </div>
 
         {/* Selector de Canchas */}
         <div className="flex items-center gap-2">

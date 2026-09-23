@@ -35,4 +35,6 @@ router.post(
   [verificarToken, esAdmin],
   ReportesController.obtenerRentabilidadServicios
 );
+
+router.post('/comportamiento-usuarios', [verificarToken, esAdmin], ReportesController.obtenerComportamientoUsuarios);
 export default router;
