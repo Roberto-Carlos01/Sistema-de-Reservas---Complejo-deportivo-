@@ -1,4 +1,5 @@
 import { useState, useEffect, ChangeEvent, FormEvent } from 'react';
+import { createPortal } from 'react-dom';
 import api from '../services/api';
 import FieldError from './FieldError';
 import {
@@ -83,6 +84,28 @@ const ModalUsuario = ({ isOpen, onClose, onSave, usuarioId = null }: ModalUsuari
     const [cargando, setCargando] = useState<boolean>(false);
     const [error, setError] = useState<string>('');
     const [mostrarContraseña, setMostrarContraseña] = useState<boolean>(false);
+
+    // =====================================================
+    // FLAGS DE ROL
+    // =====================================================
+    const rolNorm = (formData.rol || '').toLowerCase().trim();
+    const esCliente = rolNorm === 'cliente';
+    const esEmpleado = rolNorm === 'empleado';
+    const esAdmin = rolNorm === 'admin' || rolNorm === 'administrador';
+
+    // =====================================================
+    // BLOQUEAR SCROLL DEL BODY MIENTRAS EL MODAL ESTÁ ABIERTO
+    // =====================================================
+    useEffect(() => {
+        if (isOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [isOpen]);
 
     // =====================================================
     // CARGAR DATOS SI ES EDICIÓN
@@ -206,26 +229,31 @@ const ModalUsuario = ({ isOpen, onClose, onSave, usuarioId = null }: ModalUsuari
                 correo: formData.correo.toLowerCase().trim(),
                 telefono: String(formData.telefono).trim(),
                 rol: formData.rol,
-                estado: formData.estado,
-                ci_nit: formData.ci_nit ? String(formData.ci_nit).trim() : '',
-                fecha_nacimiento: formData.fecha_nacimiento || '',
-                calle: formData.calle?.trim() || '',
-                zona: formData.zona?.trim() || '',
-                ciudad: formData.ciudad?.trim() || ''
+                estado: formData.estado
             };
+
+            if (esCliente) {
+                payload.ci_nit = formData.ci_nit ? String(formData.ci_nit).trim() : '';
+                payload.fecha_nacimiento = formData.fecha_nacimiento || '';
+                payload.calle = formData.calle?.trim() || '';
+                payload.zona = formData.zona?.trim() || '';
+                payload.ciudad = formData.ciudad?.trim() || '';
+            }
+
+            if (esEmpleado) {
+                payload.fecha_contratacion = formData.fecha_contratacion;
+                payload.cargo = formData.cargo?.trim() || '';
+                payload.turno = formData.turno;
+            }
+
+            if (esAdmin) {
+                payload.nivel_acceso = formData.nivel_acceso;
+            }
 
             if (formData.contraseña && formData.contraseña.trim()) {
                 payload.contraseña = formData.contraseña;
             } else if (!modoEdicion) {
                 payload.contraseña = formData.contraseña;
-            }
-
-            if (formData.rol === 'Empleado') {
-                payload.fecha_contratacion = formData.fecha_contratacion;
-                payload.cargo = formData.cargo?.trim() || '';
-                payload.turno = formData.turno;
-            } else if (formData.rol === 'Admin' || formData.rol === 'Administrador') {
-                payload.nivel_acceso = formData.nivel_acceso;
             }
 
             if (modoEdicion) {
@@ -251,10 +279,11 @@ const ModalUsuario = ({ isOpen, onClose, onSave, usuarioId = null }: ModalUsuari
         ? calcularEdad(formData.fecha_nacimiento)
         : null;
 
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+    // ✅ MODAL RENDERIZADO EN PORTAL
+    return createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
             <div className="w-full max-w-2xl bg-claro-tarjeta dark:bg-oscuro-tarjeta rounded-2xl shadow-xl overflow-hidden border border-claro-borde dark:border-oscuro-borde max-h-[90vh] flex flex-col">
-                
+
                 {/* Cabecera */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-claro-borde dark:border-oscuro-borde shrink-0">
                     <h2 className="text-xl font-semibold text-claro-texto dark:text-oscuro-texto">
@@ -268,23 +297,23 @@ const ModalUsuario = ({ isOpen, onClose, onSave, usuarioId = null }: ModalUsuari
                 </div>
 
                 {/* Formulario scrolleable */}
-                <form 
+                <form
                     id="form-usuario"
-                    onSubmit={handleSubmit} 
+                    onSubmit={handleSubmit}
                     className="p-6 space-y-3 overflow-y-auto flex-1"
                     noValidate
                 >
-                    
+
                     {/* === DATOS BÁSICOS === */}
                     <h3 className="text-sm font-semibold text-claro-primario dark:text-oscuro-primario uppercase tracking-wide">
                         Datos básicos
                     </h3>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-claro-texto2 dark:text-oscuro-texto2 mb-1">Nombre *</label>
-                            <input 
-                                type="text" name="nombre" 
+                            <input
+                                type="text" name="nombre"
                                 value={formData.nombre} onChange={handleChange} onBlur={handleBlur}
                                 maxLength={50}
                                 className={claseInput(errores.nombre, touched.nombre)}
@@ -293,8 +322,8 @@ const ModalUsuario = ({ isOpen, onClose, onSave, usuarioId = null }: ModalUsuari
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-claro-texto2 dark:text-oscuro-texto2 mb-1">Ap. Paterno *</label>
-                            <input 
-                                type="text" name="paterno" 
+                            <input
+                                type="text" name="paterno"
                                 value={formData.paterno} onChange={handleChange} onBlur={handleBlur}
                                 maxLength={50}
                                 className={claseInput(errores.paterno, touched.paterno)}
@@ -303,8 +332,8 @@ const ModalUsuario = ({ isOpen, onClose, onSave, usuarioId = null }: ModalUsuari
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-claro-texto2 dark:text-oscuro-texto2 mb-1">Ap. Materno</label>
-                            <input 
-                                type="text" name="materno" 
+                            <input
+                                type="text" name="materno"
                                 value={formData.materno} onChange={handleChange} onBlur={handleBlur}
                                 maxLength={50}
                                 className={claseInput(errores.materno, touched.materno)}
@@ -316,8 +345,8 @@ const ModalUsuario = ({ isOpen, onClose, onSave, usuarioId = null }: ModalUsuari
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-claro-texto2 dark:text-oscuro-texto2 mb-1">Correo *</label>
-                            <input 
-                                type="email" name="correo" 
+                            <input
+                                type="email" name="correo"
                                 value={formData.correo} onChange={handleChange} onBlur={handleBlur}
                                 maxLength={150}
                                 className={claseInput(errores.correo, touched.correo)}
@@ -326,8 +355,8 @@ const ModalUsuario = ({ isOpen, onClose, onSave, usuarioId = null }: ModalUsuari
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-claro-texto2 dark:text-oscuro-texto2 mb-1">Teléfono *</label>
-                            <input 
-                                type="tel" name="telefono" 
+                            <input
+                                type="tel" name="telefono"
                                 inputMode="numeric"
                                 value={formData.telefono} onChange={handleChange} onBlur={handleBlur}
                                 maxLength={8}
@@ -340,9 +369,9 @@ const ModalUsuario = ({ isOpen, onClose, onSave, usuarioId = null }: ModalUsuari
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-claro-texto2 dark:text-oscuro-texto2 mb-1">Rol *</label>
-                            <select 
-                                name="rol" 
-                                value={formData.rol} 
+                            <select
+                                name="rol"
+                                value={formData.rol}
                                 onChange={handleRolChange}
                                 className="w-full px-3 py-2.5 border border-claro-borde dark:border-oscuro-borde rounded-xl bg-claro-fondo dark:bg-oscuro-fondo text-claro-texto dark:text-oscuro-texto focus:outline-none focus:ring-2 focus:ring-claro-primario"
                             >
@@ -353,9 +382,9 @@ const ModalUsuario = ({ isOpen, onClose, onSave, usuarioId = null }: ModalUsuari
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-claro-texto2 dark:text-oscuro-texto2 mb-1">Estado</label>
-                            <select 
-                                name="estado" 
-                                value={formData.estado} 
+                            <select
+                                name="estado"
+                                value={formData.estado}
                                 onChange={handleChange}
                                 className="w-full px-3 py-2.5 border border-claro-borde dark:border-oscuro-borde rounded-xl bg-claro-fondo dark:bg-oscuro-fondo text-claro-texto dark:text-oscuro-texto focus:outline-none focus:ring-2 focus:ring-claro-primario"
                             >
@@ -368,18 +397,18 @@ const ModalUsuario = ({ isOpen, onClose, onSave, usuarioId = null }: ModalUsuari
                                 Contraseña {modoEdicion ? '(opcional)' : '*'}
                             </label>
                             <div className="relative">
-                                <input 
-                                    type={mostrarContraseña ? 'text' : 'password'} 
-                                    name="contraseña" 
-                                    value={formData.contraseña} 
-                                    onChange={handleChange} 
+                                <input
+                                    type={mostrarContraseña ? 'text' : 'password'}
+                                    name="contraseña"
+                                    value={formData.contraseña}
+                                    onChange={handleChange}
                                     onBlur={handleBlur}
                                     placeholder={modoEdicion ? 'Dejar vacío' : '••••••••'}
                                     maxLength={100}
                                     className={claseInput(errores.contraseña, touched.contraseña)}
                                 />
-                                <button 
-                                    type="button" 
+                                <button
+                                    type="button"
                                     onClick={() => setMostrarContraseña(!mostrarContraseña)}
                                     className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-claro-texto2 hover:text-claro-primario dark:text-oscuro-texto2 dark:hover:text-oscuro-primario font-medium transition-colors"
                                     tabIndex={-1}
@@ -391,89 +420,93 @@ const ModalUsuario = ({ isOpen, onClose, onSave, usuarioId = null }: ModalUsuari
                         </div>
                     </div>
 
-                    {/* === DATOS PERSONALES === */}
-                    <h3 className="text-sm font-semibold text-claro-primario dark:text-oscuro-primario uppercase tracking-wide pt-2">
-                        Datos personales
-                    </h3>
+                    {/* === DATOS PERSONALES (SOLO CLIENTE) === */}
+                    {esCliente && (
+                        <>
+                            <h3 className="text-sm font-semibold text-claro-primario dark:text-oscuro-primario uppercase tracking-wide pt-2">
+                                Datos personales
+                            </h3>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-claro-texto2 dark:text-oscuro-texto2 mb-1">CI / NIT</label>
-                            <input 
-                                type="text" name="ci_nit" 
-                                inputMode="numeric"
-                                value={formData.ci_nit} onChange={handleChange} onBlur={handleBlur}
-                                maxLength={15}
-                                className={claseInput(errores.ci_nit, touched.ci_nit)}
-                            />
-                            <FieldError error={errores.ci_nit} touched={touched.ci_nit} />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-claro-texto2 dark:text-oscuro-texto2 mb-1">Fecha de nacimiento</label>
-                            <input 
-                                type="date" name="fecha_nacimiento" 
-                                value={formData.fecha_nacimiento} onChange={handleChange} onBlur={handleBlur}
-                                max={fechaMaximaStr}
-                                className={claseInput(errores.fecha_nacimiento, touched.fecha_nacimiento)}
-                            />
-                            {errores.fecha_nacimiento && touched.fecha_nacimiento ? (
-                                <FieldError error={errores.fecha_nacimiento} touched={touched.fecha_nacimiento} />
-                            ) : (
-                                <p className="text-xs mt-1 min-h-[16px] text-claro-texto2 dark:text-oscuro-texto2">
-                                    {edadCalculada !== null ? (
-                                        <>Edad: <span className="font-semibold text-claro-primario dark:text-oscuro-primario">{edadCalculada} años</span></>
-                                    ) : '\u00A0'}
-                                </p>
-                            )}
-                        </div>
-                    </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-claro-texto2 dark:text-oscuro-texto2 mb-1">CI / NIT</label>
+                                    <input
+                                        type="text" name="ci_nit"
+                                        inputMode="numeric"
+                                        value={formData.ci_nit} onChange={handleChange} onBlur={handleBlur}
+                                        maxLength={15}
+                                        className={claseInput(errores.ci_nit, touched.ci_nit)}
+                                    />
+                                    <FieldError error={errores.ci_nit} touched={touched.ci_nit} />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-claro-texto2 dark:text-oscuro-texto2 mb-1">Fecha de nacimiento</label>
+                                    <input
+                                        type="date" name="fecha_nacimiento"
+                                        value={formData.fecha_nacimiento} onChange={handleChange} onBlur={handleBlur}
+                                        max={fechaMaximaStr}
+                                        className={claseInput(errores.fecha_nacimiento, touched.fecha_nacimiento)}
+                                    />
+                                    {errores.fecha_nacimiento && touched.fecha_nacimiento ? (
+                                        <FieldError error={errores.fecha_nacimiento} touched={touched.fecha_nacimiento} />
+                                    ) : (
+                                        <p className="text-xs mt-1 min-h-[16px] text-claro-texto2 dark:text-oscuro-texto2">
+                                            {edadCalculada !== null ? (
+                                                <>Edad: <span className="font-semibold text-claro-primario dark:text-oscuro-primario">{edadCalculada} años</span></>
+                                            ) : '\u00A0'}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-claro-texto2 dark:text-oscuro-texto2 mb-1">Calle / Avenida</label>
-                        <input 
-                            type="text" name="calle" 
-                            value={formData.calle} onChange={handleChange} onBlur={handleBlur}
-                            maxLength={150}
-                            className={claseInput(errores.calle, touched.calle)}
-                        />
-                        <FieldError error={errores.calle} touched={touched.calle} />
-                    </div>
+                            <div>
+                                <label className="block text-sm font-medium text-claro-texto2 dark:text-oscuro-texto2 mb-1">Calle / Avenida</label>
+                                <input
+                                    type="text" name="calle"
+                                    value={formData.calle} onChange={handleChange} onBlur={handleBlur}
+                                    maxLength={150}
+                                    className={claseInput(errores.calle, touched.calle)}
+                                />
+                                <FieldError error={errores.calle} touched={touched.calle} />
+                            </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-claro-texto2 dark:text-oscuro-texto2 mb-1">Zona / Barrio</label>
-                            <input 
-                                type="text" name="zona" 
-                                value={formData.zona} onChange={handleChange} onBlur={handleBlur}
-                                maxLength={100}
-                                className={claseInput(errores.zona, touched.zona)}
-                            />
-                            <FieldError error={errores.zona} touched={touched.zona} />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-claro-texto2 dark:text-oscuro-texto2 mb-1">Ciudad</label>
-                            <input 
-                                type="text" name="ciudad" 
-                                value={formData.ciudad} onChange={handleChange} onBlur={handleBlur}
-                                maxLength={100}
-                                className={claseInput(errores.ciudad, touched.ciudad)}
-                            />
-                            <FieldError error={errores.ciudad} touched={touched.ciudad} />
-                        </div>
-                    </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-claro-texto2 dark:text-oscuro-texto2 mb-1">Zona / Barrio</label>
+                                    <input
+                                        type="text" name="zona"
+                                        value={formData.zona} onChange={handleChange} onBlur={handleBlur}
+                                        maxLength={100}
+                                        className={claseInput(errores.zona, touched.zona)}
+                                    />
+                                    <FieldError error={errores.zona} touched={touched.zona} />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-claro-texto2 dark:text-oscuro-texto2 mb-1">Ciudad</label>
+                                    <input
+                                        type="text" name="ciudad"
+                                        value={formData.ciudad} onChange={handleChange} onBlur={handleBlur}
+                                        maxLength={100}
+                                        className={claseInput(errores.ciudad, touched.ciudad)}
+                                    />
+                                    <FieldError error={errores.ciudad} touched={touched.ciudad} />
+                                </div>
+                            </div>
+                        </>
+                    )}
 
                     {/* === CAMPOS EMPLEADO === */}
-                    {formData.rol === 'Empleado' && (
+                    {esEmpleado && (
                         <>
                             <h3 className="text-sm font-semibold text-claro-primario dark:text-oscuro-primario uppercase tracking-wide pt-2">
                                 Datos laborales
                             </h3>
-                            
+
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-claro-texto2 dark:text-oscuro-texto2 mb-1">Fecha de contratación *</label>
-                                    <input 
-                                        type="date" name="fecha_contratacion" 
+                                    <input
+                                        type="date" name="fecha_contratacion"
                                         value={formData.fecha_contratacion} onChange={handleChange} onBlur={handleBlur}
                                         className={claseInput(errores.fecha_contratacion, touched.fecha_contratacion)}
                                     />
@@ -481,8 +514,8 @@ const ModalUsuario = ({ isOpen, onClose, onSave, usuarioId = null }: ModalUsuari
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-claro-texto2 dark:text-oscuro-texto2 mb-1">Cargo *</label>
-                                    <input 
-                                        type="text" name="cargo" 
+                                    <input
+                                        type="text" name="cargo"
                                         value={formData.cargo} onChange={handleChange} onBlur={handleBlur}
                                         placeholder="Ej: Recepcionista"
                                         maxLength={100}
@@ -492,9 +525,9 @@ const ModalUsuario = ({ isOpen, onClose, onSave, usuarioId = null }: ModalUsuari
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-claro-texto2 dark:text-oscuro-texto2 mb-1">Turno *</label>
-                                    <select 
-                                        name="turno" 
-                                        value={formData.turno} 
+                                    <select
+                                        name="turno"
+                                        value={formData.turno}
                                         onChange={handleChange}
                                         className="w-full px-3 py-2.5 border border-claro-borde dark:border-oscuro-borde rounded-xl bg-claro-fondo dark:bg-oscuro-fondo text-claro-texto dark:text-oscuro-texto focus:outline-none focus:ring-2 focus:ring-claro-primario"
                                     >
@@ -508,16 +541,16 @@ const ModalUsuario = ({ isOpen, onClose, onSave, usuarioId = null }: ModalUsuari
                     )}
 
                     {/* === CAMPOS ADMIN === */}
-                    {(formData.rol === 'Admin' || formData.rol === 'Administrador') && (
+                    {esAdmin && (
                         <>
                             <h3 className="text-sm font-semibold text-claro-primario dark:text-oscuro-primario uppercase tracking-wide pt-2">
                                 Datos del administrador
                             </h3>
                             <div>
                                 <label className="block text-sm font-medium text-claro-texto2 dark:text-oscuro-texto2 mb-1">Nivel de acceso *</label>
-                                <select 
-                                    name="nivel_acceso" 
-                                    value={formData.nivel_acceso} 
+                                <select
+                                    name="nivel_acceso"
+                                    value={formData.nivel_acceso}
                                     onChange={handleChange} onBlur={handleBlur}
                                     className={claseInput(errores.nivel_acceso, touched.nivel_acceso)}
                                 >
@@ -539,27 +572,28 @@ const ModalUsuario = ({ isOpen, onClose, onSave, usuarioId = null }: ModalUsuari
 
                 {/* Pie con botones */}
                 <div className="flex justify-end gap-3 px-6 py-4 border-t border-claro-borde dark:border-oscuro-borde shrink-0">
-                    <button 
-                        type="button" 
+                    <button
+                        type="button"
                         onClick={onClose}
                         className="px-5 py-2 text-sm font-medium text-claro-texto dark:text-oscuro-texto hover:bg-claro-tinte dark:hover:bg-oscuro-tinte rounded-lg transition-all"
                     >
                         Cancelar
                     </button>
-                    <button 
-                        type="submit" 
+                    <button
+                        type="submit"
                         form="form-usuario"
                         disabled={cargando}
                         className={`px-5 py-2 text-sm font-medium rounded-lg shadow-sm transition-all
-                            ${cargando 
-                                ? 'bg-gray-400 cursor-not-allowed text-white' 
+                            ${cargando
+                                ? 'bg-gray-400 cursor-not-allowed text-white'
                                 : 'bg-claro-primario hover:bg-claro-hover dark:bg-oscuro-primario dark:text-oscuro-fondo dark:hover:bg-oscuro-hover text-white'}`}
                     >
                         {cargando ? 'Guardando...' : 'Guardar'}
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

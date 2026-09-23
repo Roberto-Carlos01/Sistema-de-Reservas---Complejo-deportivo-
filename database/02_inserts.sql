@@ -5,27 +5,26 @@
 
 -- ---------- USUARIO ----------
 INSERT INTO usuario (id_usuario, nombre, apellido_paterno, apellido_materno, correo, telefono, contrasena, fecha_registro, estado_cuenta) VALUES
-(1,'Carla','Mamani','Quispe','carla.mamani@canchasbo.com','71234567','hash_pass_1','2026-01-10 09:00:00','activo'),
-(2,'Jorge','Fernandez','Rojas','jorge.fernandez@canchasbo.com','71234568','hash_pass_2','2026-01-10 09:15:00','activo'),
-(3,'Luis','Choque','Apaza','luis.choque@canchasbo.com','71234569','hash_pass_3','2026-01-12 10:00:00','activo'),
-(4,'Ana','Torrez','Vidal','ana.torrez@canchasbo.com','71234570','hash_pass_4','2026-01-12 10:05:00','activo'),
-(5,'Pedro','Salinas','Gutierrez','pedro.salinas@canchasbo.com','71234571','hash_pass_5','2026-01-12 10:10:00','activo'),
-(6,'Maria','Lopez','Cruz','maria.lopez@gmail.com','76001122','hash_pass_6','2026-02-01 14:20:00','activo'),
-(7,'Diego','Ramirez','Soto','diego.ramirez@gmail.com','76001123','hash_pass_7','2026-02-02 15:00:00','activo'),
-(8,'Sofia','Paredes','Rivas','sofia.paredes@gmail.com','76001124','hash_pass_8','2026-02-03 16:00:00','activo'),
-(9,'Andres','Guzman','Flores','andres.guzman@gmail.com','76001125','hash_pass_9','2026-02-04 09:30:00','activo'),
-(10,'Valeria','Nina','Choque','valeria.nina@gmail.com','76001126','hash_pass_10','2026-02-05 11:45:00','activo'),
-(11,'Fernando','Vargas','Ibañez','fernando.vargas@canchasbo.com','71234572','hash_pass_11','2026-01-15 08:00:00','activo'),
-(12,'Rosa','Chambi','Aguilar','rosa.chambi@canchasbo.com','71234573','hash_pass_12','2026-01-16 08:30:00','activo'),
-(13,'Hector','Poma','Yujra','hector.poma@canchasbo.com','71234574','hash_pass_13','2026-01-16 09:00:00','activo'),
-(14,'Camila','Rojas','Mendoza','camila.rojas@gmail.com','76001127','hash_pass_14','2026-02-06 10:00:00','activo'),
-(15,'Sebastian','Vega','Luna','sebastian.vega@gmail.com','76001128','hash_pass_15','2026-02-07 10:30:00','activo'),
-(16,'Daniela','Castro','Perez','daniela.castro@gmail.com','76001129','hash_pass_16','2026-02-08 11:00:00','activo'),
-(17,'Mauricio','Flores','Baptista','mauricio.flores@gmail.com','76001130','hash_pass_17','2026-02-09 11:30:00','activo'),
-(18,'Gabriela','Mercado','Sainz','gabriela.mercado@gmail.com','76001131','hash_pass_18','2026-02-10 12:00:00','activo'),
-(19,'Ricardo','Escobar','Tapia','ricardo.escobar@gmail.com','76001132','hash_pass_19','2026-02-11 12:30:00','activo'),
-(20,'Paola','Duran','Vega','paola.duran@gmail.com','76001133','hash_pass_20','2026-02-12 13:00:00','inactivo');
-
+(1,'Carla','Mamani','Quispe','carla.mamani@canchasbo.com','71234567','$2a$12$SYkWhr2bVMvKyYplaVy.VeNLKFFtY6tMDp6E9MmPp2Rzqb7qgM2RO','2026-01-10 09:00:00','activo'),
+(2,'Jorge','Fernandez','Rojas','jorge.fernandez@canchasbo.com','71234568','$2a$12$SYkWhr2bVMvKyYplaVy.VeNLKFFtY6tMDp6E9MmPp2Rzqb7qgM2RO','2026-01-10 09:15:00','activo'),
+(3,'Luis','Choque','Apaza','luis.choque@canchasbo.com','71234569','$2a$12$SYkWhr2bVMvKyYplaVy.VeNLKFFtY6tMDp6E9MmPp2Rzqb7qgM2RO','2026-01-12 10:00:00','activo'),
+(4,'Ana','Torrez','Vidal','ana.torrez@canchasbo.com','71234570','$2a$12$SYkWhr2bVMvKyYplaVy.VeNLKFFtY6tMDp6E9MmPp2Rzqb7qgM2RO','2026-01-12 10:05:00','activo'),
+(5,'Pedro','Salinas','Gutierrez','pedro.salinas@canchasbo.com','71234571','$2a$12$SYkWhr2bVMvKyYplaVy.VeNLKFFtY6tMDp6E9MmPp2Rzqb7qgM2RO','2026-01-12 10:10:00','activo'),
+(6,'Maria','Lopez','Cruz','maria.lopez@gmail.com','76001122','$2a$12$SYkWhr2bVMvKyYplaVy.VeNLKFFtY6tMDp6E9MmPp2Rzqb7qgM2RO','2026-02-01 14:20:00','activo'),
+(7,'Diego','Ramirez','Soto','diego.ramirez@gmail.com','76001123','$2a$12$SYkWhr2bVMvKyYplaVy.VeNLKFFtY6tMDp6E9MmPp2Rzqb7qgM2RO','2026-02-02 15:00:00','activo'),
+(8,'Sofia','Paredes','Rivas','sofia.paredes@gmail.com','76001124','$2a$12$SYkWhr2bVMvKyYplaVy.VeNLKFFtY6tMDp6E9MmPp2Rzqb7qgM2RO','2026-02-03 16:00:00','activo'),
+(9,'Andres','Guzman','Flores','andres.guzman@gmail.com','76001125','$2a$12$SYkWhr2bVMvKyYplaVy.VeNLKFFtY6tMDp6E9MmPp2Rzqb7qgM2RO','2026-02-04 09:30:00','activo'),
+(10,'Valeria','Nina','Choque','valeria.nina@gmail.com','76001126','$2a$12$SYkWhr2bVMvKyYplaVy.VeNLKFFtY6tMDp6E9MmPp2Rzqb7qgM2RO','2026-02-05 11:45:00','activo'),
+(11,'Fernando','Vargas','Ibañez','fernando.vargas@canchasbo.com','71234572','$2a$12$SYkWhr2bVMvKyYplaVy.VeNLKFFtY6tMDp6E9MmPp2Rzqb7qgM2RO','2026-01-15 08:00:00','activo'),
+(12,'Rosa','Chambi','Aguilar','rosa.chambi@canchasbo.com','71234573','$2a$12$SYkWhr2bVMvKyYplaVy.VeNLKFFtY6tMDp6E9MmPp2Rzqb7qgM2RO','2026-01-16 08:30:00','activo'),
+(13,'Hector','Poma','Yujra','hector.poma@canchasbo.com','71234574','$2a$12$SYkWhr2bVMvKyYplaVy.VeNLKFFtY6tMDp6E9MmPp2Rzqb7qgM2RO','2026-01-16 09:00:00','activo'),
+(14,'Camila','Rojas','Mendoza','camila.rojas@gmail.com','76001127','$2a$12$SYkWhr2bVMvKyYplaVy.VeNLKFFtY6tMDp6E9MmPp2Rzqb7qgM2RO','2026-02-06 10:00:00','activo'),
+(15,'Sebastian','Vega','Luna','sebastian.vega@gmail.com','76001128','$2a$12$SYkWhr2bVMvKyYplaVy.VeNLKFFtY6tMDp6E9MmPp2Rzqb7qgM2RO','2026-02-07 10:30:00','activo'),
+(16,'Daniela','Castro','Perez','daniela.castro@gmail.com','76001129','$2a$12$SYkWhr2bVMvKyYplaVy.VeNLKFFtY6tMDp6E9MmPp2Rzqb7qgM2RO','2026-02-08 11:00:00','activo'),
+(17,'Mauricio','Flores','Baptista','mauricio.flores@gmail.com','76001130','$2a$12$SYkWhr2bVMvKyYplaVy.VeNLKFFtY6tMDp6E9MmPp2Rzqb7qgM2RO','2026-02-09 11:30:00','activo'),
+(18,'Gabriela','Mercado','Sainz','gabriela.mercado@gmail.com','76001131','$2a$12$SYkWhr2bVMvKyYplaVy.VeNLKFFtY6tMDp6E9MmPp2Rzqb7qgM2RO','2026-02-10 12:00:00','activo'),
+(19,'Ricardo','Escobar','Tapia','ricardo.escobar@gmail.com','76001132','$2a$12$SYkWhr2bVMvKyYplaVy.VeNLKFFtY6tMDp6E9MmPp2Rzqb7qgM2RO','2026-02-11 12:30:00','activo'),
+(20,'Paola','Duran','Vega','paola.duran@gmail.com','76001133','$2a$12$SYkWhr2bVMvKyYplaVy.VeNLKFFtY6tMDp6E9MmPp2Rzqb7qgM2RO','2026-02-12 13:00:00','inactivo');
 -- ---------- SUBTIPOS ----------
 INSERT INTO administrador (id_administrador, nivel_acceso, fecha_asignacion_cargo) VALUES
 (1,'total','2026-01-10'),
@@ -39,21 +38,19 @@ INSERT INTO empleado (id_empleado, fecha_contratacion, cargo, turno) VALUES
 (12,'2026-01-16','encargado_cancha','mañana'),
 (13,'2026-01-16','soporte_reservas','tarde');
 
--- Edad recalculada de forma coherente con fecha_nacimiento, tomando como
--- fecha de referencia el 2026-09-19 (fecha "actual" del set de datos).
-INSERT INTO cliente (id_cliente, fecha_nacimiento, edad, ci_nit, calle, zona, ciudad) VALUES
-(6,'1998-04-12',28,'5612345','Av. Busch #123','Miraflores','La Paz'),
-(7,'1995-09-30',30,'5698765','Calle Illampu #45','Rosario','La Paz'),
-(8,'2001-01-18',25,'6123456','Av. Arce #789','San Jorge','La Paz'),
-(9,'1990-07-05',36,'4234567','Calle Sagarnaga #200','Casco Urbano','La Paz'),
-(10,'1999-12-22',26,'5789012','Av. Ballivian #56','Sopocachi','La Paz'),
-(14,'2000-03-15',26,'6234567','Av. 6 de Agosto #300','Sopocachi','La Paz'),
-(15,'1997-11-02',28,'5987654','Calle Comercio #88','Casco Urbano','La Paz'),
-(16,'2002-06-20',24,'6345678','Av. Montes #150','Villa Fatima','La Paz'),
-(17,'1993-08-09',33,'4456789','Calle Jaen #12','Casco Urbano','La Paz'),
-(18,'1999-02-28',27,'5876543','Av. Saavedra #400','Miraflores','La Paz'),
-(19,'1996-05-17',30,'4765432','Calle Yanacocha #67','Casco Urbano','La Paz'),
-(20,'2001-09-09',25,'6456789','Av. Costanera #220','Calacoto','La Paz');
+INSERT INTO cliente (id_cliente, fecha_nacimiento, ci_nit, calle, zona, ciudad) VALUES
+(6,'1998-04-12','5612345','Av. Busch #123','Miraflores','La Paz'),
+(7,'1995-09-30','5698765','Calle Illampu #45','Rosario','La Paz'),
+(8,'2001-01-18','6123456','Av. Arce #789','San Jorge','La Paz'),
+(9,'1990-07-05','4234567','Calle Sagarnaga #200','Casco Urbano','La Paz'),
+(10,'1999-12-22','5789012','Av. Ballivian #56','Sopocachi','La Paz'),
+(14,'2000-03-15','6234567','Av. 6 de Agosto #300','Sopocachi','La Paz'),
+(15,'1997-11-02','5987654','Calle Comercio #88','Casco Urbano','La Paz'),
+(16,'2002-06-20','6345678','Av. Montes #150','Villa Fatima','La Paz'),
+(17,'1993-08-09','4456789','Calle Jaen #12','Casco Urbano','La Paz'),
+(18,'1999-02-28','5876543','Av. Saavedra #400','Miraflores','La Paz'),
+(19,'1996-05-17','4765432','Calle Yanacocha #67','Casco Urbano','La Paz'),
+(20,'2001-09-09','6456789','Av. Costanera #220','Calacoto','La Paz');
 
 -- ---------- CANCHA ----------
 INSERT INTO cancha (id_cancha, nombre, disciplina, capacidad, precio_hora, estado, ubicacion, largo, ancho, hora_apertura, hora_cierre) VALUES
@@ -158,3 +155,20 @@ INSERT INTO evento_servicio
 VALUES
 (7, 1, 150.00),
 (7, 2, 300.00);
+
+-- =========================================================
+-- SINCRONIZAR SECUENCIAS CON LOS IDs INSERTADOS
+-- =========================================================
+-- Cuando insertamos filas con IDs explícitos, PostgreSQL no avanza
+-- las secuencias. Eso hace que el próximo INSERT sin ID choque con
+-- las filas ya existentes. Aquí sincronizamos cada secuencia con el
+-- MAX(id) actual de su tabla.
+
+SELECT setval('usuario_id_usuario_seq',              (SELECT MAX(id_usuario)            FROM usuario));
+SELECT setval('cancha_id_cancha_seq',                (SELECT MAX(id_cancha)             FROM cancha));
+SELECT setval('utilidad_id_utilidad_seq',            (SELECT MAX(id_utilidad)           FROM utilidad));
+SELECT setval('servicio_id_servicio_seq',            (SELECT MAX(id_servicio)           FROM servicio));
+SELECT setval('evento_id_evento_seq',                (SELECT MAX(id_evento)             FROM evento));
+SELECT setval('reserva_id_reserva_seq',              (SELECT MAX(id_reserva)            FROM reserva));
+SELECT setval('pago_id_pago_seq',                    (SELECT MAX(id_pago)               FROM pago));
+SELECT setval('inscripcion_id_inscripcion_seq',      (SELECT MAX(id_inscripcion)        FROM inscripcion));

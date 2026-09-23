@@ -20,7 +20,6 @@ CREATE TABLE usuario (
 CREATE TABLE cliente (
     id_cliente      INTEGER PRIMARY KEY REFERENCES usuario(id_usuario) ON DELETE CASCADE,
     fecha_nacimiento DATE,
-    edad            INTEGER,
     ci_nit          VARCHAR(20),
     calle           VARCHAR(120),
     zona            VARCHAR(80),

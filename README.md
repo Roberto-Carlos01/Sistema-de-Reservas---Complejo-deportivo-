@@ -33,12 +33,23 @@ cp .env.example .env
 Luego abrir el archivo `backend/.env` y completar con los datos reales:
 
 ```env
+# Configuración del Servidor
+PORT=4000
+
+# Conexión a la Base de Datos PostgreSQL
 DB_USER=limber
 DB_PASSWORD=123456
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=bdcomplejodeportivo
+
+# Seguridad
 JWT_SECRET=super_secreto_sports_2026_desarrollo
+
+# Gmail Smtp 
+EMAIL_USER=soportecanchas0@gmail.com
+EMAIL_PASS=sflxtcggkemlifeu   
+FRONTEND_URL=http://localhost:5173
 ```
 
 ### Paso 3 — Levantar la base de datos con Docker
@@ -96,10 +107,10 @@ VITE ready in ...ms
 
 | Email                           | Contraseña | Rol           |
 | ------------------------------- | ---------- | ------------- |
-| `carla.mamani@canchasbo.com`    | `123456`   | Administrador |
-| `jorge.fernandez@canchasbo.com` | `123456`   | Administrador |
-| `luis.choque@canchasbo.com`     | `123456`   | Empleado      |
-| `maria.lopez@gmail.com`         | `123456`   | Cliente       |
+| `carla.mamani@canchasbo.com`    | `Passw123` | Administrador |
+| `jorge.fernandez@canchasbo.com` | `Passw123` | Administrador |
+| `ana.torrez@canchasbo.com`      | `Passw123` | Empleado      |
+| `maria.lopez@gmail.com`         | `Passw123` | Cliente       |
 
 > Los administradores pueden gestionar canchas, empleados y usuarios.
 

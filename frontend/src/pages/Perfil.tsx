@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, ChangeEvent, FormEvent } from 'react';
+import { useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import FieldError from '../components/FieldError';
@@ -62,7 +62,6 @@ interface PerfilResponse {
     calle?: string;
     zona?: string;
     ciudad?: string;
-    foto_url?: string;
     rol?: string;
     fecha_contratacion?: string;
     cargo?: string;
@@ -74,18 +73,14 @@ interface PerfilResponse {
 
 interface PerfilUpdateResponse {
     token?: string;
-    perfil?: {
-        foto_url?: string;
-    };
+    perfil?: Record<string, unknown>;
 }
 
 // =====================================================
 // COMPONENTE
 // =====================================================
 const Perfil = () => {
-    const { usuario, token, login } = useAuth(); 
-    
-    const fileInputRef = useRef<HTMLInputElement>(null);
+    const { usuario, token, login } = useAuth();
 
     const [formData, setFormData] = useState<FormData>({
         nombre: '',
@@ -103,15 +98,13 @@ const Perfil = () => {
         ciudad: ''
     });
 
-    const [fotoArchivo, setFotoArchivo] = useState<File | null>(null);
-    const [fotoPreview, setFotoPreview] = useState<string | null>(null);
     const [mensaje, setMensaje] = useState<Mensaje>({ texto: '', tipo: '' });
     const [errores, setErrores] = useState<Errores>({});
     const [touched, setTouched] = useState<Touched>({});
     const [cargando, setCargando] = useState<boolean>(false);
     const [cargandoInicial, setCargandoInicial] = useState<boolean>(true);
 
-    // Datos específicos del rol (para la tarjeta derecha)
+    // Datos específicos del rol
     const [datosRol, setDatosRol] = useState<DatosRol>({
         rol: '',
         fecha_contratacion: '',
@@ -121,6 +114,14 @@ const Perfil = () => {
         nivel_acceso: '',
         fecha_asignacion_cargo: ''
     });
+
+    // =====================================================
+    // FLAGS DE ROL
+    // =====================================================
+    const rolNorm = (datosRol.rol || usuario?.rol || '').toLowerCase().trim();
+    const esCliente = rolNorm === 'cliente';
+    const esEmpleado = rolNorm === 'empleado';
+    const esAdmin = rolNorm === 'admin' || rolNorm === 'administrador';
 
     // =====================================================
     // CARGAR PERFIL
@@ -167,11 +168,6 @@ const Perfil = () => {
                         : ''
                 });
 
-                if (datos.foto_url) {
-                    const baseUrl = import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '');
-                    setFotoPreview(`${baseUrl}${datos.foto_url}`);
-                }
-
             } catch (error) {
                 console.error("Error al cargar perfil", error);
             } finally {
@@ -216,14 +212,6 @@ const Perfil = () => {
         }
     };
 
-    const handleFileChange = (e: ChangeEvent<HTMLInputElement>): void => {
-        const file = e.target.files?.[0];
-        if (file) {
-            setFotoArchivo(file);
-            setFotoPreview(URL.createObjectURL(file));
-        }
-    };
-
     // =====================================================
     // SUBMIT
     // =====================================================
@@ -233,6 +221,7 @@ const Perfil = () => {
 
         const erroresEncontrados: Errores = {};
 
+        // Validaciones comunes a todos los roles
         const errNombre = validarCampo('nombre', formData.nombre, formData);
         if (errNombre) erroresEncontrados.nombre = errNombre;
 
@@ -245,15 +234,19 @@ const Perfil = () => {
         const errCelular = validarCampo('telefono', formData.celular, formData);
         if (errCelular) erroresEncontrados.celular = errCelular;
 
-        if (formData.ci_nit) {
-            const errCi = validarCampo('ci_nit', formData.ci_nit, formData);
-            if (errCi) erroresEncontrados.ci_nit = errCi;
-        }
-        if (formData.fecha_nacimiento) {
-            const errFecha = validarCampo('fecha_nacimiento', formData.fecha_nacimiento, formData);
-            if (errFecha) erroresEncontrados.fecha_nacimiento = errFecha;
+        // Validaciones SOLO de cliente
+        if (esCliente) {
+            if (formData.ci_nit) {
+                const errCi = validarCampo('ci_nit', formData.ci_nit, formData);
+                if (errCi) erroresEncontrados.ci_nit = errCi;
+            }
+            if (formData.fecha_nacimiento) {
+                const errFecha = validarCampo('fecha_nacimiento', formData.fecha_nacimiento, formData);
+                if (errFecha) erroresEncontrados.fecha_nacimiento = errFecha;
+            }
         }
 
+        // Validaciones de contraseña (todos los roles)
         if (formData.passwordNueva || formData.passwordConfirmar) {
             if (!formData.passwordActual) {
                 setMensaje({ texto: 'Debés ingresar tu contraseña actual para cambiarla.', tipo: 'error' });
@@ -288,24 +281,23 @@ const Perfil = () => {
             dataToSend.append('correo', formData.correo.toLowerCase().trim());
             dataToSend.append('telefono', formData.celular);
 
-            dataToSend.append('ci_nit', formData.ci_nit);
-            dataToSend.append('fecha_nacimiento', formData.fecha_nacimiento);
-            dataToSend.append('calle', formData.calle);
-            dataToSend.append('zona', formData.zona);
-            dataToSend.append('ciudad', formData.ciudad);
-            
+            // Solo enviar datos de cliente si es Cliente
+            if (esCliente) {
+                dataToSend.append('ci_nit', formData.ci_nit);
+                dataToSend.append('fecha_nacimiento', formData.fecha_nacimiento);
+                dataToSend.append('calle', formData.calle);
+                dataToSend.append('zona', formData.zona);
+                dataToSend.append('ciudad', formData.ciudad);
+            }
+
             if (formData.passwordActual) dataToSend.append('passwordActual', formData.passwordActual);
             if (formData.passwordNueva) dataToSend.append('passwordNueva', formData.passwordNueva);
-            
-            if (fotoArchivo) {
-                dataToSend.append('foto', fotoArchivo);
-            }
 
             const respuesta = await axios.put<PerfilUpdateResponse>(
                 `${import.meta.env.VITE_API_URL}/usuarios/perfil`,
                 dataToSend,
                 {
-                    headers: { 
+                    headers: {
                         Authorization: `Bearer ${token}`,
                         'Content-Type': 'multipart/form-data'
                     }
@@ -313,27 +305,21 @@ const Perfil = () => {
             );
 
             setMensaje({ texto: 'Perfil actualizado correctamente.', tipo: 'exito' });
-            
+
             if (respuesta.data.token) {
                 login(respuesta.data.token);
             }
 
-            if (respuesta.data.perfil?.foto_url) {
-                const baseUrl = import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '');
-                setFotoPreview(`${baseUrl}${respuesta.data.perfil.foto_url}`);
-            }
-
-            setFormData(prev => ({ 
-                ...prev, 
-                passwordActual: '', 
-                passwordNueva: '', 
-                passwordConfirmar: '' 
+            setFormData(prev => ({
+                ...prev,
+                passwordActual: '',
+                passwordNueva: '',
+                passwordConfirmar: ''
             }));
-            setFotoArchivo(null);
         } catch (err: any) {
-            setMensaje({ 
-                texto: err.response?.data?.error || 'Error al actualizar el perfil.', 
-                tipo: 'error' 
+            setMensaje({
+                texto: err.response?.data?.error || 'Error al actualizar el perfil.',
+                tipo: 'error'
             });
         } finally {
             setCargando(false);
@@ -364,57 +350,38 @@ const Perfil = () => {
     return (
         <div className="max-w-6xl mx-auto space-y-6">
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
 
-                <div className="order-1 lg:order-2 space-y-6">
-                    
+                {/* ==================== COLUMNA LATERAL ==================== */}
+                <div className="lg:col-span-1 space-y-6">
+
                     {/* TARJETA AVATAR */}
                     <div className="bg-claro-tarjeta dark:bg-oscuro-tarjeta border border-claro-borde dark:border-oscuro-borde rounded-2xl p-6 shadow-sm flex flex-col items-center text-center transition-colors">
-                        
+
                         <div className="w-24 h-24 rounded-full bg-claro-primario dark:bg-oscuro-primario text-white dark:text-oscuro-fondo flex items-center justify-center text-3xl font-bold shadow-md mb-4 overflow-hidden border-4 border-claro-fondo dark:border-oscuro-fondo">
-                            {fotoPreview ? (
-                                <img src={fotoPreview} alt="Vista previa" className="w-full h-full object-cover" />
-                            ) : (
-                                iniciales
-                            )}
+                            {iniciales}
                         </div>
-                        
+
                         <h3 className="text-lg font-bold text-claro-texto dark:text-oscuro-texto">
                             {formData.nombre} {formData.paterno}
                         </h3>
-                        <p className="text-sm text-claro-texto2 dark:text-oscuro-texto2 mb-2">{formData.correo}</p>
-                        
-                        <span className="px-3 py-1 bg-claro-tinte dark:bg-oscuro-tinte text-claro-primario dark:text-oscuro-primario text-xs font-semibold rounded-full mb-6">
+                        <p className="text-sm text-claro-texto2 dark:text-oscuro-texto2 mb-3">{formData.correo}</p>
+
+                        <span className="px-3 py-1 bg-claro-tinte dark:bg-oscuro-tinte text-claro-primario dark:text-oscuro-primario text-xs font-semibold rounded-full">
                             {datosRol.rol || usuario?.rol || 'Usuario'}
                         </span>
-
-                        <input 
-                            type="file" 
-                            accept="image/*" 
-                            ref={fileInputRef} 
-                            onChange={handleFileChange} 
-                            className="hidden" 
-                        />
-                        <button 
-                            type="button" 
-                            onClick={() => fileInputRef.current?.click()}
-                            className="w-full py-2 border border-claro-borde dark:border-oscuro-borde text-sm font-medium text-claro-texto dark:text-oscuro-texto rounded-xl hover:bg-claro-tinte dark:hover:bg-oscuro-tinte transition-colors"
-                        >
-                            Seleccionar foto
-                        </button>
                     </div>
 
                     {/* TARJETA DATOS ESPECÍFICOS DEL ROL */}
-                    {(datosRol.rol === 'Empleado' || datosRol.rol === 'Administrador' || datosRol.rol === 'Admin') && (
+                    {(esEmpleado || esAdmin) && (
                         <div className="bg-claro-tarjeta dark:bg-oscuro-tarjeta border border-claro-borde dark:border-oscuro-borde rounded-2xl p-6 shadow-sm transition-colors">
                             <h3 className="text-sm font-semibold text-claro-texto dark:text-oscuro-texto mb-4">
-                                {datosRol.rol === 'Empleado' && 'Datos laborales'}
-                                {(datosRol.rol === 'Administrador' || datosRol.rol === 'Admin') && 'Datos de administrador'}
+                                {esEmpleado && 'Datos laborales'}
+                                {esAdmin && 'Datos de administrador'}
                             </h3>
 
                             <div className="space-y-3">
-                                {datosRol.rol === 'Empleado' && (
+                                {esEmpleado && (
                                     <>
                                         <div className="flex justify-between items-center text-sm gap-3">
                                             <span className="text-claro-texto2 dark:text-oscuro-texto2 shrink-0">Cargo</span>
@@ -427,8 +394,8 @@ const Perfil = () => {
                                         <div className="flex justify-between items-center text-sm gap-3">
                                             <span className="text-claro-texto2 dark:text-oscuro-texto2 shrink-0">Fecha contratación</span>
                                             <span className="font-medium text-claro-texto dark:text-oscuro-texto text-right">
-                                                {datosRol.fecha_contratacion 
-                                                    ? new Date(datosRol.fecha_contratacion).toLocaleDateString('es-BO') 
+                                                {datosRol.fecha_contratacion
+                                                    ? new Date(datosRol.fecha_contratacion).toLocaleDateString('es-BO')
                                                     : '—'}
                                             </span>
                                         </div>
@@ -436,14 +403,14 @@ const Perfil = () => {
                                             <span className="text-claro-texto2 dark:text-oscuro-texto2 shrink-0">Antigüedad</span>
                                             <span className="font-medium text-claro-texto dark:text-oscuro-texto text-right">
                                                 {datosRol.antiguedad !== '' && datosRol.antiguedad !== null
-                                                    ? `${datosRol.antiguedad} año(s)` 
+                                                    ? `${datosRol.antiguedad} año(s)`
                                                     : '—'}
                                             </span>
                                         </div>
                                     </>
                                 )}
 
-                                {(datosRol.rol === 'Administrador' || datosRol.rol === 'Admin') && (
+                                {esAdmin && (
                                     <>
                                         <div className="flex justify-between items-center text-sm gap-3">
                                             <span className="text-claro-texto2 dark:text-oscuro-texto2 shrink-0">Nivel de acceso</span>
@@ -452,8 +419,8 @@ const Perfil = () => {
                                         <div className="flex justify-between items-center text-sm gap-3">
                                             <span className="text-claro-texto2 dark:text-oscuro-texto2 shrink-0">En el cargo desde</span>
                                             <span className="font-medium text-claro-texto dark:text-oscuro-texto text-right">
-                                                {datosRol.fecha_asignacion_cargo 
-                                                    ? new Date(datosRol.fecha_asignacion_cargo).toLocaleDateString('es-BO') 
+                                                {datosRol.fecha_asignacion_cargo
+                                                    ? new Date(datosRol.fecha_asignacion_cargo).toLocaleDateString('es-BO')
                                                     : '—'}
                                             </span>
                                         </div>
@@ -462,37 +429,22 @@ const Perfil = () => {
                             </div>
                         </div>
                     )}
-
-                    {/* TARJETA ACTIVIDAD */}
-                    <div className="bg-claro-tarjeta dark:bg-oscuro-tarjeta border border-claro-borde dark:border-oscuro-borde rounded-2xl p-6 shadow-sm transition-colors">
-                        <h3 className="text-sm font-semibold text-claro-texto dark:text-oscuro-texto mb-4">Actividad</h3>
-                        <div className="space-y-4">
-                            <div className="flex justify-between items-center text-sm">
-                                <span className="text-claro-texto2 dark:text-oscuro-texto2">Reservas totales</span>
-                                <span className="font-medium text-claro-texto dark:text-oscuro-texto">37</span>
-                            </div>
-                            <div className="flex justify-between items-center text-sm">
-                                <span className="text-claro-texto2 dark:text-oscuro-texto2">Este mes</span>
-                                <span className="font-medium text-claro-texto dark:text-oscuro-texto">4</span>
-                            </div>
-                        </div>
-                    </div>
-
                 </div>
 
-                <div className="order-2 lg:order-1 lg:col-span-2">
+                {/* ==================== FORMULARIO ==================== */}
+                <div className="lg:col-span-2">
                     <form onSubmit={handleSubmit} className="bg-claro-tarjeta dark:bg-oscuro-tarjeta border border-claro-borde dark:border-oscuro-borde rounded-2xl shadow-sm overflow-hidden transition-colors" noValidate>
-                        
+
                         {/* === SECCIÓN 1: DATOS BÁSICOS === */}
                         <div className="p-6 md:p-8 border-b border-claro-borde dark:border-oscuro-borde">
                             <h2 className="text-lg font-semibold text-claro-texto dark:text-oscuro-texto mb-1">Datos personales</h2>
                             <p className="text-sm text-claro-texto2 dark:text-oscuro-texto2 mb-4">Así te identificamos en cada reserva.</p>
-                            
+
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-1">
                                 <div className="md:col-span-2">
                                     <label className="block text-sm font-medium text-claro-texto2 dark:text-oscuro-texto2 mb-1">Nombre</label>
-                                    <input 
-                                        type="text" name="nombre" 
+                                    <input
+                                        type="text" name="nombre"
                                         value={formData.nombre} onChange={handleChange} onBlur={handleBlur}
                                         maxLength={50}
                                         className={claseInput(errores.nombre, touched.nombre)}
@@ -501,8 +453,8 @@ const Perfil = () => {
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-claro-texto2 dark:text-oscuro-texto2 mb-1">Apellido Paterno</label>
-                                    <input 
-                                        type="text" name="paterno" 
+                                    <input
+                                        type="text" name="paterno"
                                         value={formData.paterno} onChange={handleChange} onBlur={handleBlur}
                                         maxLength={50}
                                         className={claseInput(errores.paterno, touched.paterno)}
@@ -511,8 +463,8 @@ const Perfil = () => {
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-claro-texto2 dark:text-oscuro-texto2 mb-1">Apellido Materno</label>
-                                    <input 
-                                        type="text" name="materno" 
+                                    <input
+                                        type="text" name="materno"
                                         value={formData.materno} onChange={handleChange} onBlur={handleBlur}
                                         placeholder="Opcional"
                                         maxLength={50}
@@ -522,8 +474,8 @@ const Perfil = () => {
                                 </div>
                                 <div className="md:col-span-2">
                                     <label className="block text-sm font-medium text-claro-texto2 dark:text-oscuro-texto2 mb-1">Correo electrónico</label>
-                                    <input 
-                                        type="email" name="correo" 
+                                    <input
+                                        type="email" name="correo"
                                         value={formData.correo} onChange={handleChange} onBlur={handleBlur}
                                         maxLength={150}
                                         className={claseInput(errores.correo, touched.correo)}
@@ -532,8 +484,8 @@ const Perfil = () => {
                                 </div>
                                 <div className="md:col-span-2">
                                     <label className="block text-sm font-medium text-claro-texto2 dark:text-oscuro-texto2 mb-1">Celular</label>
-                                    <input 
-                                        type="tel" name="celular" 
+                                    <input
+                                        type="tel" name="celular"
                                         inputMode="numeric"
                                         value={formData.celular} onChange={handleChange} onBlur={handleBlur}
                                         maxLength={8}
@@ -544,84 +496,86 @@ const Perfil = () => {
                             </div>
                         </div>
 
-                        {/* === SECCIÓN 2: DATOS ADICIONALES === */}
-                        <div className="p-6 md:p-8 border-b border-claro-borde dark:border-oscuro-borde">
-                            <h2 className="text-lg font-semibold text-claro-texto dark:text-oscuro-texto mb-1">Datos adicionales</h2>
-                            <p className="text-sm text-claro-texto2 dark:text-oscuro-texto2 mb-4">Completá tu información de identificación y dirección.</p>
-                            
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-1">
-                                <div>
-                                    <label className="block text-sm font-medium text-claro-texto2 dark:text-oscuro-texto2 mb-1">CI / NIT</label>
-                                    <input 
-                                        type="text" name="ci_nit" 
-                                        inputMode="numeric"
-                                        value={formData.ci_nit} onChange={handleChange} onBlur={handleBlur}
-                                        maxLength={15}
-                                        className={claseInput(errores.ci_nit, touched.ci_nit)}
-                                    />
-                                    <FieldError error={errores.ci_nit} touched={touched.ci_nit} />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-claro-texto2 dark:text-oscuro-texto2 mb-1">Fecha de nacimiento</label>
-                                    <input 
-                                        type="date" name="fecha_nacimiento" 
-                                        value={formData.fecha_nacimiento} onChange={handleChange} onBlur={handleBlur}
-                                        max={fechaMaximaStr}
-                                        className={claseInput(errores.fecha_nacimiento, touched.fecha_nacimiento)}
-                                    />
-                                    {errores.fecha_nacimiento && touched.fecha_nacimiento ? (
-                                        <FieldError error={errores.fecha_nacimiento} touched={touched.fecha_nacimiento} />
-                                    ) : (
-                                        <p className="text-xs mt-1 min-h-[16px] text-claro-texto2 dark:text-oscuro-texto2">
-                                            {edadCalculada !== null ? (
-                                                <>Edad: <span className="font-semibold text-claro-primario dark:text-oscuro-primario">{edadCalculada} años</span></>
-                                            ) : '\u00A0'}
-                                        </p>
-                                    )}
-                                </div>
-                                <div className="md:col-span-2">
-                                    <label className="block text-sm font-medium text-claro-texto2 dark:text-oscuro-texto2 mb-1">Calle / Avenida</label>
-                                    <input 
-                                        type="text" name="calle" 
-                                        value={formData.calle} onChange={handleChange}
-                                        maxLength={150}
-                                        className={claseInput(errores.calle, touched.calle)}
-                                    />
-                                    <FieldError error={errores.calle} touched={touched.calle} />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-claro-texto2 dark:text-oscuro-texto2 mb-1">Zona / Barrio</label>
-                                    <input 
-                                        type="text" name="zona" 
-                                        value={formData.zona} onChange={handleChange}
-                                        maxLength={100}
-                                        className={claseInput(errores.zona, touched.zona)}
-                                    />
-                                    <FieldError error={errores.zona} touched={touched.zona} />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-claro-texto2 dark:text-oscuro-texto2 mb-1">Ciudad</label>
-                                    <input 
-                                        type="text" name="ciudad" 
-                                        value={formData.ciudad} onChange={handleChange}
-                                        maxLength={100}
-                                        className={claseInput(errores.ciudad, touched.ciudad)}
-                                    />
-                                    <FieldError error={errores.ciudad} touched={touched.ciudad} />
+                        {/* === SECCIÓN 2: DATOS ADICIONALES (SOLO CLIENTE) === */}
+                        {esCliente && (
+                            <div className="p-6 md:p-8 border-b border-claro-borde dark:border-oscuro-borde">
+                                <h2 className="text-lg font-semibold text-claro-texto dark:text-oscuro-texto mb-1">Datos adicionales</h2>
+                                <p className="text-sm text-claro-texto2 dark:text-oscuro-texto2 mb-4">Completá tu información de identificación y dirección.</p>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-1">
+                                    <div>
+                                        <label className="block text-sm font-medium text-claro-texto2 dark:text-oscuro-texto2 mb-1">CI / NIT</label>
+                                        <input
+                                            type="text" name="ci_nit"
+                                            inputMode="numeric"
+                                            value={formData.ci_nit} onChange={handleChange} onBlur={handleBlur}
+                                            maxLength={15}
+                                            className={claseInput(errores.ci_nit, touched.ci_nit)}
+                                        />
+                                        <FieldError error={errores.ci_nit} touched={touched.ci_nit} />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-claro-texto2 dark:text-oscuro-texto2 mb-1">Fecha de nacimiento</label>
+                                        <input
+                                            type="date" name="fecha_nacimiento"
+                                            value={formData.fecha_nacimiento} onChange={handleChange} onBlur={handleBlur}
+                                            max={fechaMaximaStr}
+                                            className={claseInput(errores.fecha_nacimiento, touched.fecha_nacimiento)}
+                                        />
+                                        {errores.fecha_nacimiento && touched.fecha_nacimiento ? (
+                                            <FieldError error={errores.fecha_nacimiento} touched={touched.fecha_nacimiento} />
+                                        ) : (
+                                            <p className="text-xs mt-1 min-h-[16px] text-claro-texto2 dark:text-oscuro-texto2">
+                                                {edadCalculada !== null ? (
+                                                    <>Edad: <span className="font-semibold text-claro-primario dark:text-oscuro-primario">{edadCalculada} años</span></>
+                                                ) : '\u00A0'}
+                                            </p>
+                                        )}
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <label className="block text-sm font-medium text-claro-texto2 dark:text-oscuro-texto2 mb-1">Calle / Avenida</label>
+                                        <input
+                                            type="text" name="calle"
+                                            value={formData.calle} onChange={handleChange}
+                                            maxLength={150}
+                                            className={claseInput(errores.calle, touched.calle)}
+                                        />
+                                        <FieldError error={errores.calle} touched={touched.calle} />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-claro-texto2 dark:text-oscuro-texto2 mb-1">Zona / Barrio</label>
+                                        <input
+                                            type="text" name="zona"
+                                            value={formData.zona} onChange={handleChange}
+                                            maxLength={100}
+                                            className={claseInput(errores.zona, touched.zona)}
+                                        />
+                                        <FieldError error={errores.zona} touched={touched.zona} />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-claro-texto2 dark:text-oscuro-texto2 mb-1">Ciudad</label>
+                                        <input
+                                            type="text" name="ciudad"
+                                            value={formData.ciudad} onChange={handleChange}
+                                            maxLength={100}
+                                            className={claseInput(errores.ciudad, touched.ciudad)}
+                                        />
+                                        <FieldError error={errores.ciudad} touched={touched.ciudad} />
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        )}
 
                         {/* === SECCIÓN 3: CONTRASEÑA === */}
                         <div className="p-6 md:p-8">
                             <h2 className="text-lg font-semibold text-claro-texto dark:text-oscuro-texto mb-1">Cambiar contraseña</h2>
                             <p className="text-sm text-claro-texto2 dark:text-oscuro-texto2 mb-4">Dejá los campos vacíos si no querés cambiarla.</p>
-                            
+
                             <div className="space-y-1">
                                 <div>
                                     <label className="block text-sm font-medium text-claro-texto2 dark:text-oscuro-texto2 mb-1">Contraseña actual</label>
-                                    <input 
-                                        type="password" name="passwordActual" 
+                                    <input
+                                        type="password" name="passwordActual"
                                         value={formData.passwordActual} onChange={handleChange}
                                         placeholder="••••••••"
                                         maxLength={100}
@@ -632,8 +586,8 @@ const Perfil = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-1">
                                     <div>
                                         <label className="block text-sm font-medium text-claro-texto2 dark:text-oscuro-texto2 mb-1">Nueva contraseña</label>
-                                        <input 
-                                            type="password" name="passwordNueva" 
+                                        <input
+                                            type="password" name="passwordNueva"
                                             value={formData.passwordNueva} onChange={handleChange}
                                             placeholder="Mínimo 8 caracteres"
                                             maxLength={100}
@@ -643,8 +597,8 @@ const Perfil = () => {
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-claro-texto2 dark:text-oscuro-texto2 mb-1">Repetir nueva</label>
-                                        <input 
-                                            type="password" name="passwordConfirmar" 
+                                        <input
+                                            type="password" name="passwordConfirmar"
                                             value={formData.passwordConfirmar} onChange={handleChange}
                                             placeholder="Repetí la contraseña"
                                             maxLength={100}
@@ -662,18 +616,18 @@ const Perfil = () => {
                             )}
 
                             <div className="flex items-center gap-3 mt-6">
-                                <button 
-                                    type="submit" 
+                                <button
+                                    type="submit"
                                     disabled={cargando}
                                     className={`px-6 py-2.5 rounded-xl font-medium text-white shadow-sm transition-all
-                                    ${cargando 
-                                        ? 'bg-gray-400 cursor-not-allowed' 
+                                    ${cargando
+                                        ? 'bg-gray-400 cursor-not-allowed'
                                         : 'bg-claro-primario hover:bg-claro-hover dark:bg-oscuro-primario dark:text-oscuro-fondo dark:hover:bg-oscuro-hover'}`}
                                 >
                                     {cargando ? 'Guardando...' : 'Guardar cambios'}
                                 </button>
-                                <button 
-                                    type="button" 
+                                <button
+                                    type="button"
                                     onClick={() => window.location.reload()}
                                     className="px-6 py-2.5 rounded-xl font-medium text-claro-texto dark:text-oscuro-texto border border-claro-borde dark:border-oscuro-borde hover:bg-claro-tinte dark:hover:bg-oscuro-tinte transition-all"
                                 >
