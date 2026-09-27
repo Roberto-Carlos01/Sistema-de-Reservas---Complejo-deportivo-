@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import ModalUsuario from '../components/ModalUsuario';
@@ -21,6 +22,7 @@ interface Usuario {
 // COMPONENTE
 // =====================================================
 const PanelAdmin = () => {
+    const navigate = useNavigate();
     const { token } = useAuth();
     
     // Estados principales
@@ -208,6 +210,14 @@ const PanelAdmin = () => {
                                     ))}
                                 </tbody>
                             </table>
+                            <div className="flex justify-end mt-4">
+                                <button
+                                    onClick={() => navigate('/reportes?tab=usuarios')}
+                                    className="px-5 py-2.5 rounded-xl bg-[#245743] text-white font-medium hover:bg-[#173F30] transition-colors shadow-sm"
+                                >
+                                    📊 Reporte de usuarios
+                                </button>
+                                </div>
                         </div>
 
                         {/* ============================================ */}
