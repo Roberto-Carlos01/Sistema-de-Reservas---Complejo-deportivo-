@@ -156,6 +156,86 @@ VALUES
 (7, 1, 150.00),
 (7, 2, 300.00);
 
+-- ============================================================
+-- DATOS DE DEMOSTRACIÓN - HISTORIAL DE INSCRIPCIONES DE MARÍA
+-- Cliente: María López (id_cliente = 6)
+-- ============================================================
+
+INSERT INTO inscripcion
+    (id_cliente, id_evento, fecha_inscripcion, estado, fecha_cancelacion)
+VALUES
+    -- Torneo Interbarrial de Fútbol
+    (6, 1, '2026-09-20 10:00:00', 'confirmada', NULL),
+
+    -- Exhibición de Vóley
+    (6, 2, '2026-09-21 11:30:00', 'pendiente', NULL),
+
+    -- Copa Interna de Básquet
+    (6, 3, '2026-09-22 14:00:00', 'cancelada', '2026-09-24 16:00:00'),
+
+    -- Clase Abierta de Pádel
+    (6, 4, '2026-09-23 09:15:00', 'confirmada', NULL),
+
+    -- Maratón 5K Interna
+    (6, 5, '2026-09-24 12:45:00', 'confirmada', NULL),
+
+    -- Torneo de Vóley Playero (evento cancelado)
+    (6, 6, '2026-09-25 15:30:00', 'confirmada', NULL);
+-- ============================================================
+-- DATOS DE DEMOSTRACIÓN - RESERVAS DE MARÍA LÓPEZ
+-- Cliente: id_cliente = 6
+-- ============================================================
+
+INSERT INTO reserva
+    (fecha_solicitud, estado, fecha_reserva, canal_reserva,
+     hora_inicio, hora_fin, id_cliente, id_cancha,
+     id_empleado, fecha_gestion, observaciones)
+VALUES
+
+    -- Reserva pendiente - Básquet
+    (
+        '2026-09-26 10:00:00',
+        'pendiente',
+        '2026-10-10',
+        'web',
+        '15:00:00',
+        '17:00:00',
+        6,
+        2,
+        NULL,
+        NULL,
+        'Reserva pendiente de confirmación'
+    ),
+
+    -- Reserva cancelada - Pádel
+    (
+        '2026-09-26 11:30:00',
+        'cancelada',
+        '2026-10-15',
+        'web',
+        '18:00:00',
+        '19:00:00',
+        6,
+        5,
+        NULL,
+        NULL,
+        'Reserva cancelada por el cliente'
+    ),
+
+    -- Reserva confirmada - Futsal
+    (
+        '2026-09-26 14:00:00',
+        'confirmada',
+        '2026-10-20',
+        'web',
+        '16:00:00',
+        '18:00:00',
+        6,
+        6,
+        NULL,
+        '2026-09-26 14:05:00',
+        'Reserva confirmada para presentación'
+    );
 -- =========================================================
 -- SINCRONIZAR SECUENCIAS CON LOS IDs INSERTADOS
 -- =========================================================

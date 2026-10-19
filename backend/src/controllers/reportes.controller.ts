@@ -159,7 +159,154 @@ export const ReportesController = {
       });
     }
   },
+
+  obtenerReporteUsuarios: async (req: Request, res: Response) => {
+    try {
+      console.log("🚨 LLEGÓ A obtenerReporteUsuarios");
+      console.log("BODY:", req.body);
+      const {
+        fechaInicio,
+        fechaFin,
+        tipoUsuario,
+        estado,
+        busqueda
+      } = req.body;
+
+      const result = await ReportesModel.obtenerReporteUsuarios(
+        fechaInicio,
+        fechaFin,
+        tipoUsuario,
+        estado,
+        busqueda
+      );
+
+      res.status(200).json({
+        success: true,
+        data: result
+      });
+
+    } catch (error) {
+
+      console.error(
+        "Error al obtener reporte de usuarios:",
+        error
+      );
+
+      res.status(500).json({
+        success: false,
+        message: "Error al obtener el reporte de usuarios."
+      });
+    }
+  },
+
+    obtenerHistorialCliente: async (req: Request, res: Response) => {
+    try {
+      const usuario = (req as any).usuario;
+
+      if (!usuario?.id_usuario) {
+        return res.status(401).json({
+          success: false,
+          message: "Usuario no autenticado."
+        });
+      }
+
+      const result = await ReportesModel.obtenerHistorialCliente(
+        usuario.id_usuario
+      );
+
+      res.status(200).json({
+        success: true,
+        data: result
+      });
+    } catch (error) {
+      console.error("Error al obtener historial del cliente:", error);
+
+      res.status(500).json({
+        success: false,
+        message: "Error al obtener el historial de reservas."
+      });
+    }
+  },
+  obtenerHistorialInscripciones: async (req: Request, res: Response) => {
+    try {
+        const usuario = (req as any).usuario;
+
+        if (!usuario?.id_usuario) {
+            return res.status(401).json({
+                success: false,
+                message: "Usuario no autenticado."
+            });
+        }
+
+        const result = await ReportesModel.obtenerHistorialInscripciones(
+            usuario.id_usuario
+        );
+
+        res.status(200).json({
+            success: true,
+            data: result
+        });
+    } catch (error) {
+        console.error(
+            "Error al obtener historial de inscripciones:",
+            error
+        );
+
+        res.status(500).json({
+            success: false,
+            message: "Error al obtener el historial de inscripciones."
+        });
+    }
+},
+
+    obtenerDetallesPagos: async (req: Request, res: Response) => {
+    try {
+      const { fechaInicio, fechaFin } = req.body;
+
+      if (!fechaInicio || !fechaFin) {
+        return res.status(400).json({
+          success: false,
+          message: 'Las fechas de inicio y fin son obligatorias.'
+        });
+      }
+
+      const result = await ReportesModel.obtenerDetallesPagos(fechaInicio, fechaFin);
+
+      res.status(200).json({ success: true, data: result });
+    } catch (error) {
+      console.error("Error al obtener detalles de los pagos:", error);
+      res.status(500).json({
+        success: false,
+        message: 'Error al obtener el reporte de pagos.'
+      });
+    }
+
+  },
+  obtenerReporteEventosServicios: async (req: Request, res: Response) => {
+    try {
+      const { fechaInicio, fechaFin } = req.body;
+
+      if (!fechaInicio || !fechaFin) {
+        return res.status(400).json({
+          success: false,
+          message: 'Las fechas de inicio y fin son obligatorias.'
+        });
+      }
+
+      const result = await ReportesModel.obtenerReporteEventosServicios(fechaInicio, fechaFin);
+
+      res.status(200).json({ success: true, data: result });
+    } catch (error) {
+      console.error("Error al obtener reporte de eventos y servicios:", error);
+      res.status(500).json({
+        success: false,
+        message: 'Error al obtener el reporte de eventos y servicios.'
+      });
+    }
+  },
+
 };
+
 
 
 const transformarANivoHeatmap = (
