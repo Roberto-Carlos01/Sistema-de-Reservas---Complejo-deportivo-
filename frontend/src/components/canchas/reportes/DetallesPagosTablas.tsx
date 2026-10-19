@@ -18,7 +18,7 @@ interface ComponentProps {
 }
 
 export const DetallesPagosTabla: React.FC<ComponentProps> = ({ fechaInicio, fechaFin }) => {
-  const [pagos, setPagos] = useState([]);
+  const [pagos, setPagos] = useState<DetallesPagos[]>([]);
   const [cargando, setCargando] = useState(false);
 
   const [filtroEstado, setFiltroEstado] = useState('todos');
