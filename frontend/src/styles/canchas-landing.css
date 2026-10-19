@@ -624,7 +624,8 @@ body {
   background: linear-gradient(180deg, rgba(28, 48, 52, 0.5) 0%, rgba(16, 16, 16, 0.85) 100%);
   border: 1px solid rgba(241, 234, 218, 0.12);
   border-radius: var(--radius-lg);
-  padding: 1.5rem;
+  padding: 0;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -638,6 +639,54 @@ body {
   border-color: rgba(241, 234, 218, 0.32);
   transform: translateY(-4px);
   box-shadow: 0 16px 36px -6px rgba(0, 0, 0, 0.75), 0 0 24px rgba(28, 48, 52, 0.4);
+}
+
+/* Banner de Fotografía de la Cancha */
+.cancha-card-media {
+  position: relative;
+  width: 100%;
+  height: 180px;
+  overflow: hidden;
+  background-color: #0b1416;
+}
+
+.cancha-card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+  display: block;
+}
+
+.cancha-card:hover .cancha-card-image {
+  transform: scale(1.06);
+}
+
+.cancha-card-media-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.1) 40%, rgba(16, 16, 16, 0.95) 100%);
+  pointer-events: none;
+}
+
+.card-header-floating {
+  position: absolute;
+  top: 0.85rem;
+  left: 0.85rem;
+  right: 0.85rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 2;
+}
+
+.cancha-card .card-body {
+  padding: 1.25rem 1.4rem 0.5rem;
+  flex: 1;
+}
+
+.cancha-card .card-footer {
+  padding: 0 1.4rem 1.4rem;
 }
 
 .card-header {
@@ -1178,3 +1227,118 @@ body {
   .canchas-grid { grid-template-columns: 1fr; }
   .hero-cta-group { flex-direction: column; width: 100%; }
 }
+
+/* ============================================================================
+   ESTILOS DE SUBIDA Y GESTIÓN DE IMÁGENES DE CANCHAS
+   ============================================================================ */
+.image-upload-container {
+  width: 100%;
+}
+
+.image-upload-dropzone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.4rem 1rem;
+  border: 2px dashed rgba(241, 234, 218, 0.22);
+  border-radius: var(--radius-md);
+  background: rgba(16, 26, 28, 0.6);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.image-upload-dropzone:hover {
+  border-color: var(--border-focus);
+  background: rgba(28, 48, 52, 0.45);
+}
+
+.dropzone-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.35rem;
+}
+
+.dropzone-icon {
+  font-size: 2rem;
+  margin-bottom: 0.2rem;
+}
+
+.dropzone-text {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.dropzone-formats {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.image-preview-card {
+  position: relative;
+  width: 100%;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  background: #0b1416;
+}
+
+.image-preview-thumbnail {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  display: block;
+}
+
+.image-preview-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  padding: 0.6rem 0.8rem;
+  background: rgba(20, 27, 29, 0.95);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.btn-upload-subtle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-main);
+  background: rgba(241, 234, 218, 0.1);
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-upload-subtle:hover {
+  background: rgba(241, 234, 218, 0.2);
+}
+
+.btn-upload-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-upload-danger:hover {
+  background: rgba(239, 68, 68, 0.22);
+}
+
+.hidden-file-input {
+  display: none !important;
+}
+

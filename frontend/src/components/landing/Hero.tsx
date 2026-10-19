@@ -180,8 +180,8 @@ export const Hero: React.FC = () => {
 
         {/* Título Principal con Gradiente */}
         <h1 className="hero-title">
-          Tu espacio ideal para <br />
-          <span className="text-gradient">jugar, entrenar y competir</span>
+          Complejo Deportivo "Sport Plex" <br />
+          <span className="text-gradient">"Vive tu Pasión Deportiva"</span>
         </h1>
 
         {/* Descripción */}

@@ -5,12 +5,15 @@
  * ============================================================================
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import type { Cancha } from './cancha.types';
+import { getCanchaImageUrl, getDisciplinaDefaultImage } from './cancha.api';
 
 interface CanchaCardProps {
   cancha: Cancha;
   isAdmin?: boolean;
+  /** Cuando es true, el usuario puede editar pero NO eliminar ni crear (rol Empleado) */
+  canEditOnly?: boolean;
   onEdit: (cancha: Cancha) => void;
   onDelete: (id: number) => void;
   onSelectReserva?: (cancha: Cancha) => void;
@@ -32,24 +35,44 @@ const getDisciplinaBadge = (disciplina: string | null) => {
 export const CanchaCard: React.FC<CanchaCardProps> = ({
   cancha,
   isAdmin = false,
+  canEditOnly = false,
   onEdit,
   onDelete,
   onSelectReserva,
 }) => {
   const discInfo = getDisciplinaBadge(cancha.disciplina);
   const isDisponible = cancha.estado?.toLowerCase() === 'disponible';
+  const defaultImage = getDisciplinaDefaultImage(cancha.disciplina);
+  const [imgSrc, setImgSrc] = useState(getCanchaImageUrl(cancha.imagen_url) || defaultImage);
+
+  useEffect(() => {
+    setImgSrc(getCanchaImageUrl(cancha.imagen_url) || defaultImage);
+  }, [cancha.imagen_url, cancha.disciplina]);
 
   return (
     <div className="cancha-card">
-      <div className="card-header">
-        <div className="card-discipline-badge">
-          <span className="disc-icon">{discInfo.icon}</span>
-          <span className={`badge ${discInfo.color}`}>{discInfo.label}</span>
+      {/* Contenedor de Fotografía de la Cancha */}
+      <div className="cancha-card-media">
+        <img
+          src={imgSrc}
+          alt={cancha.nombre}
+          className="cancha-card-image"
+          onError={() => setImgSrc(defaultImage)}
+          loading="lazy"
+        />
+        <div className="cancha-card-media-overlay" />
+        
+        {/* Badges superiores flotantes */}
+        <div className="card-header-floating">
+          <div className="card-discipline-badge">
+            <span className="disc-icon">{discInfo.icon}</span>
+            <span className={`badge ${discInfo.color}`}>{discInfo.label}</span>
+          </div>
+          <span className={`status-pill ${isDisponible ? 'status-online' : 'status-maint'}`}>
+            <span className="status-dot"></span>
+            {isDisponible ? 'Disponible' : 'Mantenimiento'}
+          </span>
         </div>
-        <span className={`status-pill ${isDisponible ? 'status-online' : 'status-maint'}`}>
-          <span className="status-dot"></span>
-          {isDisponible ? 'Disponible' : 'Mantenimiento'}
-        </span>
       </div>
 
       <div className="card-body">
@@ -97,13 +120,13 @@ export const CanchaCard: React.FC<CanchaCardProps> = ({
         </div>
 
         <div className="card-actions">
-          {/* Botones de Gestión Administrativa: SOLO si isAdmin es true */}
-          {isAdmin && (
+          {/* Botones de Gestión: Admin (editar + eliminar) | Empleado (solo editar) */}
+          {(isAdmin || canEditOnly) && (
             <>
               <button
                 type="button"
                 className="btn-icon"
-                title="Editar Cancha (Solo Administrador)"
+                title={isAdmin ? 'Editar Cancha (Administrador)' : 'Editar Cancha (Empleado)'}
                 onClick={() => onEdit(cancha)}
               >
                 <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
@@ -111,16 +134,19 @@ export const CanchaCard: React.FC<CanchaCardProps> = ({
                 </svg>
               </button>
               
-              <button
-                type="button"
-                className="btn-icon btn-danger"
-                title="Eliminar Cancha (Solo Administrador)"
-                onClick={() => onDelete(cancha.id_cancha)}
-              >
-                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-              </button>
+              {/* Botón Eliminar: Exclusivo para Administrador */}
+              {isAdmin && (
+                <button
+                  type="button"
+                  className="btn-icon btn-danger"
+                  title="Dar de baja / Desactivar Cancha (Baja lógica)"
+                  onClick={() => onDelete(cancha.id_cancha)}
+                >
+                  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              )}
             </>
           )}
 

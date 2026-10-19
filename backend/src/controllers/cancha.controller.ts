@@ -16,7 +16,8 @@
 
 import type { Request, Response } from 'express';
 import { canchaService } from '../services/cancha.service';
-import type { CreateCanchaDTO, UpdateCanchaDTO, CanchaFilters } from '../types/cancha.types';
+import type { Cancha, CreateCanchaDTO, UpdateCanchaDTO, CanchaFilters } from '../types/cancha.types';
+import { saveCanchaImage } from '../utils/canchaImage.util';
 
 // Helper para extraer string de parámetros o queries de Express
 const extractString = (val: unknown): string | undefined => {
@@ -149,9 +150,9 @@ export class CanchaController {
    */
   async create(req: Request, res: Response): Promise<void> {
     try {
-      const data: CreateCanchaDTO = req.body;
+      const data = req.body;
 
-      if (!data.nombre || data.nombre.trim() === '') {
+      if (!data.nombre || String(data.nombre).trim() === '') {
         res.status(400).json({
           success: false,
           message: 'El campo "nombre" es obligatorio',
@@ -159,7 +160,8 @@ export class CanchaController {
         return;
       }
 
-      if (data.precio_hora === undefined || isNaN(Number(data.precio_hora)) || Number(data.precio_hora) < 0) {
+      const precioHoraNum = Number(data.precio_hora);
+      if (data.precio_hora === undefined || isNaN(precioHoraNum) || precioHoraNum < 0) {
         res.status(400).json({
           success: false,
           message: 'El campo "precio_hora" es obligatorio y debe ser un número positivo',
@@ -167,10 +169,26 @@ export class CanchaController {
         return;
       }
 
-      const nuevaCancha = await canchaService.createCancha({
-        ...data,
-        precio_hora: Number(data.precio_hora),
-      });
+      const payload: CreateCanchaDTO = {
+        nombre: String(data.nombre).trim(),
+        disciplina: data.disciplina || null,
+        capacidad: data.capacidad ? parseInt(String(data.capacidad), 10) : null,
+        precio_hora: precioHoraNum,
+        estado: data.estado || 'disponible',
+        ubicacion: data.ubicacion || null,
+        largo: data.largo ? parseFloat(String(data.largo)) : null,
+        ancho: data.ancho ? parseFloat(String(data.ancho)) : null,
+        hora_apertura: data.hora_apertura || null,
+        hora_cierre: data.hora_cierre || null,
+      };
+
+      const nuevaCancha = await canchaService.createCancha(payload);
+
+      // Si se adjuntó un archivo de imagen en la petición (multipart/form-data)
+      if (req.file) {
+        const imagenUrl = saveCanchaImage(nuevaCancha.id_cancha, req.file.path, req.file.originalname);
+        nuevaCancha.imagen_url = imagenUrl;
+      }
 
       res.status(201).json({
         success: true,
@@ -210,17 +228,31 @@ export class CanchaController {
         return;
       }
 
-      const data: UpdateCanchaDTO = req.body;
+      const data = req.body || {};
+      const updateData: UpdateCanchaDTO = {};
 
-      if (!data || Object.keys(data).length === 0) {
-        res.status(400).json({
-          success: false,
-          message: 'Debe proporcionar al menos un campo para actualizar',
-        });
-        return;
+      if (data.nombre !== undefined) updateData.nombre = String(data.nombre).trim();
+      if (data.disciplina !== undefined) updateData.disciplina = data.disciplina || null;
+      if (data.capacidad !== undefined) updateData.capacidad = data.capacidad ? parseInt(String(data.capacidad), 10) : null;
+      if (data.precio_hora !== undefined) updateData.precio_hora = Number(data.precio_hora);
+      if (data.estado !== undefined) updateData.estado = data.estado;
+      if (data.ubicacion !== undefined) updateData.ubicacion = data.ubicacion || null;
+      if (data.largo !== undefined) updateData.largo = data.largo ? parseFloat(String(data.largo)) : null;
+      if (data.ancho !== undefined) updateData.ancho = data.ancho ? parseFloat(String(data.ancho)) : null;
+      if (data.hora_apertura !== undefined) updateData.hora_apertura = data.hora_apertura || null;
+      if (data.hora_cierre !== undefined) updateData.hora_cierre = data.hora_cierre || null;
+
+      // Si se adjuntó una nueva imagen, se guarda y reemplaza la previa
+      if (req.file) {
+        saveCanchaImage(id, req.file.path, req.file.originalname);
       }
 
-      const canchaActualizada = await canchaService.updateCancha(id, data);
+      let canchaActualizada: Cancha | null = null;
+      if (Object.keys(updateData).length > 0) {
+        canchaActualizada = await canchaService.updateCancha(id, updateData);
+      } else {
+        canchaActualizada = await canchaService.getCanchaById(id);
+      }
 
       if (!canchaActualizada) {
         res.status(404).json({
@@ -246,7 +278,7 @@ export class CanchaController {
   }
 
   /**
-   * DELETE /api/canchas/:id
+   * DELETE /api/canchas/:id (Eliminación Lógica / Soft Delete)
    */
   async delete(req: Request, res: Response): Promise<void> {
     try {
@@ -273,30 +305,20 @@ export class CanchaController {
       if (!deleted) {
         res.status(404).json({
           success: false,
-          message: `No se encontró la cancha con ID ${id} para eliminar`,
+          message: `No se encontró la cancha con ID ${id} para dar de baja`,
         });
         return;
       }
 
       res.status(200).json({
         success: true,
-        message: `Cancha con ID ${id} eliminada correctamente`,
+        message: `Cancha con ID ${id} desactivada correctamente (baja lógica)`,
       });
     } catch (error) {
       console.error(`Error en CanchaController.delete (${req.params.id}):`, error);
-
-      const pgError = error as { code?: string; message?: string };
-      if (pgError.code === '23503') {
-        res.status(409).json({
-          success: false,
-          message: 'No se puede eliminar la cancha porque tiene reservas, administradores o eventos asociados.',
-        });
-        return;
-      }
-
       res.status(500).json({
         success: false,
-        message: 'Error interno del servidor al eliminar la cancha',
+        message: 'Error interno del servidor al desactivar la cancha',
         error: (error as Error).message,
       });
     }
