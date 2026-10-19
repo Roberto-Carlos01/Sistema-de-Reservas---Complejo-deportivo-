@@ -2,7 +2,7 @@ services:
   db:
     image: postgres:15-alpine
     container_name: postgres-db-complejo-deportivo
-    restart: always
+    restart: no
     environment:
       POSTGRES_USER: limber
       POSTGRES_PASSWORD: 123456
@@ -22,7 +22,7 @@ services:
   pgadmin:
     image: dpage/pgadmin4
     container_name: sports_pgadmin
-    restart: always
+    restart: no
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@sports.com
       PGADMIN_DEFAULT_PASSWORD: admin
@@ -34,7 +34,7 @@ services:
   backend:
     build: ./backend
     container_name: sports_backend
-    restart: always
+    restart: no
     ports:
       - "4000:4000"
     env_file:
@@ -51,7 +51,7 @@ services:
   frontend:
     build: ./frontend
     container_name: sports_frontend
-    restart: always
+    restart: no
     ports:
       - "5173:5173"
     environment:
