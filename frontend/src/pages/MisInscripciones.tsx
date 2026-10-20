@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import IconCanchas from '../assets/icon_canchas.svg?react';
+import ToastMensaje from '../components/eventos/ToastMensaje';
 
 const MisInscripciones = () => {
     const { token } = useAuth();
@@ -51,12 +52,7 @@ const MisInscripciones = () => {
                 </p>
             </div>
 
-            {mensaje && (
-                <div className={`p-4 rounded-xl text-sm font-medium ${mensaje.tipo === 'exito' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                    {mensaje.texto}
-                    <button onClick={() => setMensaje(null)} className="float-right font-bold">&times;</button>
-                </div>
-            )}
+            <ToastMensaje mensaje={mensaje} onClose={() => setMensaje(null)} />
 
             {loading ? (
                 <div className="text-center py-10 text-claro-texto2 dark:text-oscuro-texto2">Cargando inscripciones...</div>
@@ -71,12 +67,13 @@ const MisInscripciones = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {inscripciones.map(inscripcion => {
                         const fechaEvento = new Date(inscripcion.fecha_evento);
-                        const esFechaPasada = fechaEvento < new Date();
+                        const esFechaPasada = new Date(`${fechaEvento.toISOString().substring(0, 10)}T${inscripcion.hora_fin}`) <= new Date();
                         const estaCancelada = inscripcion.estado_inscripcion !== 'confirmada';
                         const eventoCancelado = inscripcion.estado_evento === 'cancelado';
+                        const eventoFinalizado = esFechaPasada && !estaCancelada && !eventoCancelado;
                         
                         return (
-                            <div key={inscripcion.id_inscripcion} className={`bg-claro-tarjeta dark:bg-oscuro-tarjeta rounded-2xl border border-claro-borde dark:border-oscuro-borde overflow-hidden flex flex-col ${estaCancelada ? 'opacity-70' : ''}`}>
+                            <div key={inscripcion.id_inscripcion} className={`bg-claro-tarjeta dark:bg-oscuro-tarjeta rounded-2xl border border-claro-borde dark:border-oscuro-borde overflow-hidden flex flex-col ${estaCancelada || eventoFinalizado ? 'opacity-70' : ''}`}>
                                 <div className={`p-5 border-b border-claro-borde dark:border-oscuro-borde ${eventoCancelado ? 'bg-red-50 dark:bg-red-900/10' : 'bg-claro-tinte dark:bg-oscuro-tinte'}`}>
                                     <div className="flex justify-between items-start mb-2">
                                         <span className="bg-white dark:bg-oscuro-fondo px-3 py-1 rounded-full text-xs font-bold text-claro-primario dark:text-oscuro-primario shadow-sm">
@@ -84,9 +81,10 @@ const MisInscripciones = () => {
                                         </span>
                                         <span className={`text-xs font-bold px-2 py-1 rounded-md ${
                                             estaCancelada ? 'bg-red-100 text-red-700' : 
-                                            eventoCancelado ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+                                            eventoCancelado ? 'bg-red-100 text-red-700' :
+                                            eventoFinalizado ? 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200' : 'bg-green-100 text-green-700'
                                         }`}>
-                                            {eventoCancelado ? 'EVENTO CANCELADO' : estaCancelada ? 'CANCELADA' : 'CONFIRMADA'}
+                                            {eventoCancelado ? 'EVENTO CANCELADO' : estaCancelada ? 'CANCELADA' : eventoFinalizado ? 'EVENTO FINALIZADO' : 'CONFIRMADA'}
                                         </span>
                                     </div>
                                     <h3 className="text-lg font-bold text-claro-texto dark:text-oscuro-texto line-clamp-1">{inscripcion.nombre_evento}</h3>
@@ -95,15 +93,33 @@ const MisInscripciones = () => {
                                     <div className="flex items-center gap-3 text-claro-texto2 dark:text-oscuro-texto2 text-sm">
                                         <span className="font-medium">{fechaEvento.toLocaleDateString('es-ES', { timeZone: 'UTC' })}</span>
                                         <span>•</span>
-                                        <span>{inscripcion.hora_inicio} - {inscripcion.hora_fin}</span>
+                                        <span>{inscripcion.hora_inicio?.substring(0, 5)} - {inscripcion.hora_fin?.substring(0, 5)}</span>
                                     </div>
                                     <div className="text-sm text-claro-texto2 dark:text-oscuro-texto2">
                                         Cancha: <span className="font-medium text-claro-texto dark:text-oscuro-texto">{inscripcion.cancha_nombre}</span>
                                     </div>
                                     
+                                    {typeof inscripcion.costo_por_persona === 'number' && (
+                                        <div className="text-sm text-claro-texto2 dark:text-oscuro-texto2">
+                                            Costo de inscripción: <span className="font-bold text-claro-texto dark:text-oscuro-texto">Bs. {Number(inscripcion.costo_por_persona).toFixed(2)}</span>
+                                        </div>
+                                    )}
+
+                                    {eventoCancelado && inscripcion.motivo_cancelacion && (
+                                        <div className="text-sm rounded-lg bg-red-50 dark:bg-red-900/10 text-red-700 dark:text-red-300 p-3">
+                                            <span className="font-semibold">Motivo de la cancelación: </span>{inscripcion.motivo_cancelacion}
+                                        </div>
+                                    )}
+
                                     <div className="mt-auto pt-4 border-t border-claro-borde dark:border-oscuro-borde text-xs text-claro-texto2 dark:text-oscuro-texto2 mb-4">
                                         Inscrito el: {new Date(inscripcion.fecha_inscripcion).toLocaleString()}
                                     </div>
+
+                                    {eventoFinalizado && (
+                                        <div className="text-sm font-medium text-center py-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-claro-texto2 dark:text-oscuro-texto2">
+                                            Este evento ya se realizó
+                                        </div>
+                                    )}
 
                                     {!esFechaPasada && !estaCancelada && !eventoCancelado && (
                                         <button

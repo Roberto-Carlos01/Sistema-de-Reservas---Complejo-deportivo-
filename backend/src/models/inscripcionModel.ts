@@ -6,9 +6,13 @@ export class InscripcionModel {
         try {
             await client.query('BEGIN');
 
-            const eventoRes = await client.query(`SELECT fecha_evento, hora_inicio, hora_fin, cupo_maximo, estado FROM evento WHERE id_evento = $1`, [id_evento]);
+            const eventoRes = await client.query(`SELECT fecha_evento, hora_inicio, hora_fin, cupo_maximo, estado FROM evento WHERE id_evento = $1 FOR UPDATE`, [id_evento]);
             if (eventoRes.rows.length === 0) throw new Error("Evento no encontrado");
             const evento = eventoRes.rows[0];
+
+            // Si ya está inscrito (confirmada), no se vuelve a inscribir
+            const yaInscrito = await client.query(`SELECT 1 FROM inscripcion WHERE id_cliente = $1 AND id_evento = $2 AND estado = 'confirmada'`, [id_cliente, id_evento]);
+            if (yaInscrito.rows.length > 0) throw new Error("Ya estás inscrito en este evento");
             if (evento.estado === 'cancelado') throw new Error("El evento está cancelado");
 
             const finEvento = new Date(`${evento.fecha_evento.toISOString().substring(0, 10)}T${evento.hora_fin}`);
@@ -16,7 +20,7 @@ export class InscripcionModel {
                 throw new Error("No es posible inscribirse a un evento que ya ocurrió");
             }
             
-            const cuposRes = await client.query(`SELECT COUNT(*) as inscritos FROM inscripcion WHERE id_evento = $1 AND estado != 'cancelada'`, [id_evento]);
+            const cuposRes = await client.query(`SELECT COUNT(*) as inscritos FROM inscripcion WHERE id_evento = $1 AND estado = 'confirmada'`, [id_evento]);
             const inscritos = parseInt(cuposRes.rows[0].inscritos);
             if (inscritos >= evento.cupo_maximo) throw new Error("Se ha alcanzado el aforo máximo para este evento");
 
@@ -34,7 +38,7 @@ export class InscripcionModel {
                 JOIN evento e ON i.id_evento = e.id_evento
                 WHERE i.id_cliente = $1 
                   AND e.fecha_evento = $2
-                  AND i.estado != 'cancelada'
+                  AND i.estado = 'confirmada'
                   AND i.id_evento != $5
                   AND ($3 < e.hora_fin AND $4 > e.hora_inicio)
             `, [id_cliente, evento.fecha_evento, evento.hora_inicio, evento.hora_fin, id_evento]);
@@ -84,7 +88,7 @@ export class InscripcionModel {
     static async obtenerInscripcionesCliente(id_cliente: number): Promise<any[]> {
         const query = `
             SELECT i.id_inscripcion, i.estado as estado_inscripcion, i.fecha_inscripcion, 
-                   e.id_evento, e.nombre_evento, e.fecha_evento, e.hora_inicio, e.hora_fin, e.tipo_evento, e.estado as estado_evento,
+                   e.id_evento, e.nombre_evento, e.fecha_evento, e.hora_inicio, e.hora_fin, e.tipo_evento, e.estado as estado_evento, e.motivo_cancelacion,
                    (
                        SELECT string_agg(c.nombre, ', ' ORDER BY c.nombre)
                        FROM evento_cancha ec

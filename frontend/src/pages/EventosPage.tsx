@@ -3,13 +3,15 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import IconCanchas from '../assets/icon_canchas.svg?react';
 import ToastMensaje from '../components/eventos/ToastMensaje';
+import CanchasEventoModal, { ImagenCancha } from '../components/eventos/CanchasEventoModal';
 
 interface CanchaAsignada {
     id_cancha: number;
     nombre: string;
     disciplina: string;
     ubicacion?: string;
-    precio_hora?: number;
+    capacidad?: number;
+    imagen_url?: string | null;
 }
 
 interface Servicio {
@@ -33,6 +35,7 @@ interface Evento {
     canchas_asignadas?: CanchaAsignada[];
     servicios_adicionales?: Servicio[];
     costo_por_persona?: number;
+    ya_inscrito?: boolean;
 }
 
 const EventosPage = () => {
@@ -44,6 +47,7 @@ const EventosPage = () => {
     const [filtroFecha, setFiltroFecha] = useState<string>('');
     const [filtroCancha, setFiltroCancha] = useState<string>('');
     const [mensaje, setMensaje] = useState<{ tipo: 'exito' | 'error', texto: string } | null>(null);
+    const [eventoCanchas, setEventoCanchas] = useState<Evento | null>(null);
     const isCliente = usuario?.rol?.toLowerCase() === 'cliente';
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 
@@ -184,20 +188,27 @@ const EventosPage = () => {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {eventos.map(evento => {
-                        const esFechaPasada = new Date(evento.fecha_evento) < new Date();
+                        const esFechaPasada = new Date(`${new Date(evento.fecha_evento).toISOString().substring(0, 10)}T${evento.hora_fin}`) <= new Date();
                         const sinCupo = evento.cupos_restantes <= 0;
                         const fechaFormat = new Date(evento.fecha_evento).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
 
                         return (
                             <div key={evento.id_evento} className="bg-claro-tarjeta dark:bg-oscuro-tarjeta rounded-2xl border border-claro-borde dark:border-oscuro-borde overflow-hidden hover:shadow-lg transition-shadow flex flex-col h-full">
-                                <div className="h-32 bg-claro-tinte dark:bg-oscuro-tinte p-6 flex flex-col justify-end relative">
+                                <div className="h-44 bg-claro-tinte dark:bg-oscuro-tinte p-6 flex flex-col justify-end relative overflow-hidden">
+                                    {(evento.canchas_asignadas || [])[0] && (
+                                        <ImagenCancha cancha={(evento.canchas_asignadas || [])[0]} className="absolute inset-0 w-full h-full" />
+                                    )}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
                                     <span className="absolute top-4 right-4 bg-white dark:bg-oscuro-fondo px-3 py-1 rounded-full text-xs font-bold text-claro-primario dark:text-oscuro-primario shadow-sm">
                                         {evento.tipo_evento}
                                     </span>
-                                    <h3 className="text-xl font-bold text-claro-texto dark:text-oscuro-texto line-clamp-1">{evento.nombre_evento}</h3>
+                                    <h3 className="relative text-xl font-bold text-white line-clamp-1 drop-shadow">{evento.nombre_evento}</h3>
                                 </div>
                                 <div className="p-6 flex-1 flex flex-col">
                                     <div className="space-y-3 mb-6 flex-1">
+                                        {evento.descripcion && (
+                                            <p className="text-sm text-claro-texto2 dark:text-oscuro-texto2 line-clamp-2">{evento.descripcion}</p>
+                                        )}
                                         <div className="flex items-center gap-3 text-claro-texto2 dark:text-oscuro-texto2">
                                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -208,7 +219,7 @@ const EventosPage = () => {
                                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                             </svg>
-                                            <span className="text-sm font-medium">{evento.hora_inicio} - {evento.hora_fin}</span>
+                                            <span className="text-sm font-medium">{evento.hora_inicio?.substring(0, 5)} - {evento.hora_fin?.substring(0, 5)}</span>
                                         </div>
                                         <div className="flex items-center gap-3 text-claro-texto2 dark:text-oscuro-texto2">
                                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -221,12 +232,35 @@ const EventosPage = () => {
                                                     : 'Sin cancha asignada'}
                                             </span>
                                         </div>
+                                        {(evento.canchas_asignadas || []).length > 0 && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setEventoCanchas(evento)}
+                                                className="flex items-center gap-2 group"
+                                                title="Ver fotos de las canchas"
+                                            >
+                                                <div className="flex -space-x-2">
+                                                    {(evento.canchas_asignadas || []).slice(0, 4).map(c => (
+                                                        <ImagenCancha key={c.id_cancha} cancha={c} className="w-9 h-9 rounded-full border-2 border-claro-tarjeta dark:border-oscuro-tarjeta" />
+                                                    ))}
+                                                </div>
+                                                <span className="text-xs font-semibold text-claro-primario dark:text-oscuro-primario group-hover:underline">
+                                                    Ver {(evento.canchas_asignadas || []).length === 1 ? 'la cancha' : `las ${(evento.canchas_asignadas || []).length} canchas`}
+                                                </span>
+                                            </button>
+                                        )}
                                         <div className="flex items-center gap-3 text-claro-texto2 dark:text-oscuro-texto2">
                                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                                             </svg>
                                             <span className="text-sm font-medium">Cupos restantes: {evento.cupos_restantes} / {evento.cupo_maximo}</span>
                                         </div>
+                                        {(evento.servicios_adicionales || []).length > 0 && (
+                                            <div className="text-xs text-claro-texto2 dark:text-oscuro-texto2">
+                                                <span className="font-semibold text-claro-texto dark:text-oscuro-texto">Incluye: </span>
+                                                {(evento.servicios_adicionales || []).map(s => s.nombre).join(', ')}
+                                            </div>
+                                        )}
                                         {typeof evento.costo_por_persona === 'number' && (
                                             <div className="flex items-center gap-3 text-claro-texto dark:text-oscuro-texto">
                                                 <span className="text-sm font-bold">Tu costo: Bs. {Number(evento.costo_por_persona).toFixed(2)} <span className="font-normal text-claro-texto2 dark:text-oscuro-texto2">por persona</span></span>
@@ -237,15 +271,17 @@ const EventosPage = () => {
                                     {isCliente && (
                                         <button
                                             onClick={() => handleInscribir(evento.id_evento)}
-                                            disabled={esFechaPasada || sinCupo}
+                                            disabled={esFechaPasada || sinCupo || evento.ya_inscrito}
                                             className={`w-full py-3 rounded-xl font-bold transition-all text-sm
-                                                ${esFechaPasada || sinCupo 
+                                                ${evento.ya_inscrito
+                                                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 cursor-default'
+                                                    : esFechaPasada || sinCupo 
                                                     ? 'bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500 cursor-not-allowed'
                                                     : 'bg-claro-primario text-white hover:bg-opacity-90 dark:bg-oscuro-primario shadow-md hover:shadow-lg'
                                                 }
                                             `}
                                         >
-                                            {esFechaPasada ? 'Evento Finalizado' : sinCupo ? 'Agotado' : 'Inscribirse Ahora'}
+                                            {evento.ya_inscrito ? '✓ Ya estás inscrito' : esFechaPasada ? 'Evento Finalizado' : sinCupo ? 'Agotado' : 'Inscribirse Ahora'}
                                         </button>
                                     )}
                                 </div>
@@ -254,6 +290,8 @@ const EventosPage = () => {
                     })}
                 </div>
             )}
+
+            <CanchasEventoModal evento={eventoCanchas} onClose={() => setEventoCanchas(null)} />
         </div>
     );
 };

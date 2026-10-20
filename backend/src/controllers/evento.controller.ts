@@ -168,10 +168,17 @@ export class EventoController {
             // El cliente solo ve lo que debe pagar él (costo_por_persona), no el costo total del evento
             const rol = (req as any).usuario?.rol?.toLowerCase();
             if (rol === 'cliente') {
+                const id_cliente = (req as any).usuario?.id_usuario;
+                const misInscripciones = id_cliente ? await InscripcionModel.obtenerInscripcionesCliente(id_cliente) : [];
+                const idsInscrito = new Set(
+                    misInscripciones.filter((i: any) => i.estado_inscripcion === 'confirmada').map((i: any) => i.id_evento)
+                );
+
                 const paraCliente = eventos.map((ev: any) => {
                     const { costo_total, total_servicios, ...resto } = ev;
                     return {
                         ...resto,
+                        ya_inscrito: idsInscrito.has(ev.id_evento),
                         servicios_adicionales: (ev.servicios_adicionales || []).map((s: any) => ({ id_servicio: s.id_servicio, nombre: s.nombre })),
                         canchas_asignadas: (ev.canchas_asignadas || []).map(({ precio_hora, ...c }: any) => c),
                         cancha_asignada: ev.cancha_asignada ? (({ precio_hora, ...c }: any) => c)(ev.cancha_asignada) : null
@@ -251,7 +258,13 @@ export class EventoController {
             }
 
             const inscripciones = await InscripcionModel.obtenerInscripcionesCliente(id_cliente);
-            res.json({ success: true, data: inscripciones });
+
+            // Costo por persona del evento (misma fórmula que ve el cliente en la sección Eventos)
+            const eventos = await EventoModel.obtenerEventos();
+            const costos = new Map<number, number>(eventos.map((ev: any) => [ev.id_evento, ev.costo_por_persona]));
+            const conCosto = inscripciones.map((i: any) => ({ ...i, costo_por_persona: costos.get(i.id_evento) ?? null }));
+
+            res.json({ success: true, data: conCosto });
         } catch (error) {
             console.error('Error al obtener inscripciones:', error);
             res.status(500).json({ success: false, message: 'Error interno al obtener inscripciones.' });

@@ -1,4 +1,5 @@
 import { pool } from '../config/database';
+import { findCanchaImage } from '../utils/canchaImage.util';
 import { PoolClient } from 'pg';
 
 // Porcentaje que se suma al costo por persona como ganancia del complejo (0.03 = 3 %)
@@ -236,7 +237,7 @@ export class EventoModel {
                        FROM evento_servicio es WHERE es.id_evento = e.id_evento
                    ) as total_servicios,
                    (
-                       SELECT COUNT(*) FROM inscripcion i WHERE i.id_evento = e.id_evento AND i.estado != 'cancelada'
+                       SELECT COUNT(*) FROM inscripcion i WHERE i.id_evento = e.id_evento AND i.estado = 'confirmada'
                    ) as inscritos
             FROM evento e
             WHERE 1=1
@@ -261,7 +262,7 @@ export class EventoModel {
             values.push(parseInt(filtros.id_cancha));
         }
         if (filtros?.disponibles) {
-            query += ` AND e.estado = 'programado' AND e.fecha_evento >= CURRENT_DATE`;
+            query += ` AND e.estado = 'programado' AND e.fecha_evento >= CURRENT_DATE - 1`;
         }
 
         query += ` ORDER BY e.fecha_evento DESC, e.hora_inicio ASC`;
@@ -284,7 +285,7 @@ export class EventoModel {
                 WHERE ec.id_evento = $1
                 ORDER BY c.nombre ASC
             `, [row.id_evento]);
-            row.canchas_asignadas = cRes.rows;
+            row.canchas_asignadas = cRes.rows.map((c: any) => ({ ...c, imagen_url: findCanchaImage(c.id_cancha) }));
             // Compatibilidad: primera cancha como "cancha_asignada"
             row.cancha_asignada = cRes.rows[0] || null;
 
@@ -303,6 +304,15 @@ export class EventoModel {
                 ? Math.ceil((row.costo_total / aforo) * (1 + MARGEN_GANANCIA) * 2) / 2
                 : 0;
             row.cupos_restantes = row.cupo_maximo - parseInt(row.inscritos);
+
+            // ¿Ya terminó? (misma regla que usa el sistema para impedir inscripciones/ediciones)
+            const finEvento = new Date(`${new Date(row.fecha_evento).toISOString().substring(0, 10)}T${row.hora_fin}`);
+            row.finalizado = row.estado !== 'cancelado' && finEvento <= new Date();
+        }
+
+        // Para clientes (disponibles=true): solo eventos programados que todavía no terminaron
+        if (filtros?.disponibles) {
+            return rows.filter((r: any) => !r.finalizado);
         }
 
         return rows;
@@ -343,7 +353,7 @@ export class EventoModel {
             }
 
             const inscritosRes = await client.query(
-                `SELECT COUNT(*) as inscritos FROM inscripcion WHERE id_evento = $1 AND estado != 'cancelada'`,
+                `SELECT COUNT(*) as inscritos FROM inscripcion WHERE id_evento = $1 AND estado = 'confirmada'`,
                 [id_evento]
             );
             const inscritos = parseInt(inscritosRes.rows[0].inscritos);

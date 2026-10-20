@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import ToastMensaje from '../components/eventos/ToastMensaje';
+import CanchasEventoModal, { ImagenCancha } from '../components/eventos/CanchasEventoModal';
 
 const GestionEventos = () => {
     const { token } = useAuth();
@@ -32,6 +33,13 @@ const GestionEventos = () => {
     const [idsCanchas, setIdsCanchas] = useState<number[]>([]);
     const [canchasOcupadas, setCanchasOcupadas] = useState<number[]>([]);
     const [filtroDisciplina, setFiltroDisciplina] = useState<string>('todas');
+
+    // Pestañas de la lista, modal "Ver canchas" y modal de cancelación
+    const [tab, setTab] = useState<'proximos' | 'finalizados' | 'cancelados' | 'todos'>('proximos');
+    const [eventoCanchasVer, setEventoCanchasVer] = useState<any | null>(null);
+    const [eventoACancelar, setEventoACancelar] = useState<any | null>(null);
+    const [motivoCancelacion, setMotivoCancelacion] = useState('');
+    const [cancelando, setCancelando] = useState(false);
 
     // Modal "Ver inscritos"
     const [eventoInscritos, setEventoInscritos] = useState<any | null>(null);
@@ -191,14 +199,25 @@ const GestionEventos = () => {
         setServiciosSeleccionados([]);
     };
 
-    const handleCancelarEvento = async (id: number) => {
-        const motivo = prompt("Ingrese el motivo de la cancelación:");
-        if (!motivo) return;
+    const abrirCancelar = (evento: any) => {
+        setMotivoCancelacion('');
+        setEventoACancelar(evento);
+    };
 
+    const handleCancelarEvento = async () => {
+        if (!eventoACancelar) return;
+        const motivo = motivoCancelacion.trim();
+        if (!motivo) {
+            setMensaje({ tipo: 'error', texto: 'Debe escribir el motivo de la cancelación.' });
+            return;
+        }
+
+        setCancelando(true);
         try {
-            const res = await axios.patch(`${apiUrl}/eventos/${id}/cancelar`, { motivo_cancelacion: motivo }, {
+            const res = await axios.patch(`${apiUrl}/eventos/${eventoACancelar.id_evento}/cancelar`, { motivo_cancelacion: motivo }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
+            setEventoACancelar(null);
             const afectados = res.data?.data?.afectados || [];
             const texto = afectados.length > 0
                 ? `Evento cancelado. Clientes a notificar (${afectados.length}): ${afectados.map((a: any) => `${a.nombre} (${a.correo})`).join(', ')}`
@@ -207,8 +226,29 @@ const GestionEventos = () => {
             cargarDatos();
         } catch (error: any) {
             setMensaje({ tipo: 'error', texto: error.response?.data?.message || 'Error al cancelar evento' });
+        } finally {
+            setCancelando(false);
         }
     };
+
+    // Estado que ve el administrador: un evento programado que ya terminó se muestra como "finalizado"
+    const estadoVisual = (e: any) => e.estado === 'cancelado' ? 'cancelado' : e.finalizado ? 'finalizado' : 'programado';
+
+    const conteo = {
+        proximos: eventos.filter(e => estadoVisual(e) === 'programado').length,
+        finalizados: eventos.filter(e => estadoVisual(e) === 'finalizado').length,
+        cancelados: eventos.filter(e => estadoVisual(e) === 'cancelado').length,
+        todos: eventos.length
+    };
+
+    const eventosFiltrados = (() => {
+        if (tab === 'todos') return eventos;
+        const lista = eventos.filter(e => estadoVisual(e) === (tab === 'proximos' ? 'programado' : tab === 'finalizados' ? 'finalizado' : 'cancelado'));
+        // Próximos: del más cercano al más lejano
+        return tab === 'proximos'
+            ? [...lista].sort((a, b) => `${String(a.fecha_evento).substring(0, 10)}${a.hora_inicio}`.localeCompare(`${String(b.fecha_evento).substring(0, 10)}${b.hora_inicio}`))
+            : lista;
+    })();
 
     const toggleCancha = (id_cancha: number) => {
         setIdsCanchas(prev => prev.includes(id_cancha) ? prev.filter(id => id !== id_cancha) : [...prev, id_cancha]);
@@ -309,6 +349,30 @@ const GestionEventos = () => {
 
             <ToastMensaje mensaje={mensaje} onClose={() => setMensaje(null)} />
 
+            <div className="flex flex-wrap gap-2">
+                {([
+                    ['proximos', 'Próximos'],
+                    ['finalizados', 'Finalizados'],
+                    ['cancelados', 'Cancelados'],
+                    ['todos', 'Todos']
+                ] as const).map(([clave, texto]) => (
+                    <button
+                        key={clave}
+                        onClick={() => setTab(clave)}
+                        className={`px-4 py-2 rounded-xl text-sm font-medium border transition-colors ${tab === clave
+                            ? 'bg-claro-primario text-white border-claro-primario dark:bg-oscuro-primario dark:border-oscuro-primario'
+                            : 'border-claro-borde dark:border-oscuro-borde text-claro-texto2 dark:text-oscuro-texto2 hover:bg-claro-tinte dark:hover:bg-oscuro-tinte'}`}
+                    >
+                        {texto} <span className="opacity-80">({conteo[clave]})</span>
+                    </button>
+                ))}
+            </div>
+            {tab === 'proximos' && (
+                <p className="text-xs text-claro-texto2 dark:text-oscuro-texto2 -mt-3">
+                    Estos son los eventos que ven los clientes en la sección Eventos. Use las otras pestañas para ver el historial.
+                </p>
+            )}
+
             <div className="bg-claro-tarjeta dark:bg-oscuro-tarjeta rounded-2xl border border-claro-borde dark:border-oscuro-borde overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm text-claro-texto dark:text-oscuro-texto">
@@ -326,10 +390,10 @@ const GestionEventos = () => {
                         <tbody className="divide-y divide-claro-borde dark:divide-oscuro-borde">
                             {loading ? (
                                 <tr><td colSpan={7} className="px-6 py-8 text-center text-claro-texto2 dark:text-oscuro-texto2">Cargando eventos...</td></tr>
-                            ) : eventos.length === 0 ? (
-                                <tr><td colSpan={7} className="px-6 py-8 text-center text-claro-texto2 dark:text-oscuro-texto2">No hay eventos registrados.</td></tr>
+                            ) : eventosFiltrados.length === 0 ? (
+                                <tr><td colSpan={7} className="px-6 py-8 text-center text-claro-texto2 dark:text-oscuro-texto2">No hay eventos en esta categoría.</td></tr>
                             ) : (
-                                eventos.map(evento => (
+                                eventosFiltrados.map(evento => (
                                     <tr key={evento.id_evento} className="hover:bg-gray-50 dark:hover:bg-oscuro-fondo transition-colors">
                                         <td className="px-6 py-4">
                                             <div className="font-semibold">{evento.nombre_evento}</div>
@@ -337,7 +401,7 @@ const GestionEventos = () => {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div>{new Date(evento.fecha_evento).toLocaleDateString('es-ES', { timeZone: 'UTC' })}</div>
-                                            <div className="text-xs text-claro-texto2 dark:text-oscuro-texto2">{evento.hora_inicio} - {evento.hora_fin}</div>
+                                            <div className="text-xs text-claro-texto2 dark:text-oscuro-texto2">{evento.hora_inicio?.substring(0, 5)} - {evento.hora_fin?.substring(0, 5)}</div>
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex flex-wrap gap-1 max-w-[220px]">
@@ -347,9 +411,12 @@ const GestionEventos = () => {
                                                     </span>
                                                 ))}
                                             </div>
-                                            <div className="text-xs text-claro-texto2 dark:text-oscuro-texto2 mt-1">
-                                                {(evento.canchas_asignadas || []).length} {(evento.canchas_asignadas || []).length === 1 ? 'cancha' : 'canchas'}
-                                            </div>
+                                            <button
+                                                onClick={() => setEventoCanchasVer(evento)}
+                                                className="text-xs text-claro-primario dark:text-oscuro-primario font-medium hover:underline mt-1"
+                                            >
+                                                {(evento.canchas_asignadas || []).length} {(evento.canchas_asignadas || []).length === 1 ? 'cancha' : 'canchas'} · Ver fotos
+                                            </button>
                                         </td>
                                         <td className="px-6 py-4">
                                             <button
@@ -366,15 +433,15 @@ const GestionEventos = () => {
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`px-2.5 py-1 rounded-full text-xs font-medium border
-                                                ${evento.estado === 'programado' ? 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800' :
-                                                  evento.estado === 'cancelado' ? 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800' :
+                                                ${estadoVisual(evento) === 'programado' ? 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800' :
+                                                  estadoVisual(evento) === 'cancelado' ? 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800' :
                                                   'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700'
                                                 }`}>
-                                                {evento.estado}
+                                                {estadoVisual(evento)}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
-                                            {evento.estado === 'programado' && (
+                                            {estadoVisual(evento) === 'programado' && (
                                                 <div className="flex items-center gap-3">
                                                     <button 
                                                         onClick={() => abrirModalEditar(evento)}
@@ -383,14 +450,17 @@ const GestionEventos = () => {
                                                         Editar
                                                     </button>
                                                     <button 
-                                                        onClick={() => handleCancelarEvento(evento.id_evento)}
+                                                        onClick={() => abrirCancelar(evento)}
                                                         className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 font-medium text-sm transition-colors"
                                                     >
                                                         Cancelar
                                                     </button>
                                                 </div>
                                             )}
-                                            {evento.estado === 'cancelado' && (
+                                            {estadoVisual(evento) === 'finalizado' && (
+                                                <span className="text-xs text-claro-texto2 dark:text-oscuro-texto2">Sin acciones</span>
+                                            )}
+                                            {estadoVisual(evento) === 'cancelado' && (
                                                 <button 
                                                     onClick={() => abrirModalReprogramar(evento)}
                                                     className="text-claro-primario hover:text-opacity-80 dark:text-oscuro-primario font-medium text-sm transition-colors"
@@ -444,6 +514,11 @@ const GestionEventos = () => {
                                             <div>
                                                 <label className="block text-sm font-medium text-claro-texto dark:text-oscuro-texto mb-1">Aforo Máximo</label>
                                                 <input required type="number" min="1" className="w-full px-3 py-2 rounded-lg border border-claro-borde dark:border-oscuro-borde bg-claro-fondo dark:bg-oscuro-fondo" value={formData.cupo_maximo} onChange={e => setFormData({...formData, cupo_maximo: e.target.value === '' ? 0 : parseInt(e.target.value)})} />
+                                                {capacidadTotal > 0 && Number(formData.cupo_maximo) > capacidadTotal && (
+                                                    <p className="text-xs mt-1 text-amber-600 dark:text-amber-400">
+                                                        El aforo supera la capacidad de las canchas elegidas ({capacidadTotal} personas).
+                                                    </p>
+                                                )}
                                             </div>
                                         </div>
                                         <div className="grid grid-cols-2 gap-4">
@@ -556,6 +631,9 @@ const GestionEventos = () => {
                                                             : 'border-claro-borde dark:border-oscuro-borde hover:border-claro-primario dark:hover:border-oscuro-primario'}
                                                         bg-claro-fondo dark:bg-oscuro-fondo`}
                                                 >
+                                                    <div className="relative -mx-3 -mt-3 mb-2 h-24 overflow-hidden rounded-t-[10px]">
+                                                        <ImagenCancha cancha={c} className="w-full h-full" />
+                                                    </div>
                                                     <div className="flex items-start justify-between gap-2">
                                                         <span className="text-xl">{iconoDisciplina(c.disciplina)}</span>
                                                         <span className={`w-5 h-5 rounded border-2 flex items-center justify-center text-xs font-bold ${seleccionada ? 'bg-claro-primario border-claro-primario text-white dark:bg-oscuro-primario dark:border-oscuro-primario' : 'border-claro-borde dark:border-oscuro-borde'}`}>
@@ -641,6 +719,42 @@ const GestionEventos = () => {
                                     ))}
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal: canchas del evento con fotos */}
+            <CanchasEventoModal evento={eventoCanchasVer} onClose={() => setEventoCanchasVer(null)} />
+
+            {/* Modal: cancelar evento (reemplaza al prompt del navegador) */}
+            {eventoACancelar && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-claro-tarjeta dark:bg-oscuro-tarjeta rounded-2xl w-full max-w-md shadow-2xl border border-claro-borde dark:border-oscuro-borde p-6 space-y-4">
+                        <h3 className="text-xl font-bold text-claro-texto dark:text-oscuro-texto">Cancelar evento</h3>
+                        <p className="text-sm text-claro-texto2 dark:text-oscuro-texto2">
+                            Se cancelará <span className="font-semibold text-claro-texto dark:text-oscuro-texto">{eventoACancelar.nombre_evento}</span>.
+                            {Number(eventoACancelar.inscritos) > 0
+                                ? <> Hay <span className="font-semibold text-red-600 dark:text-red-400">{eventoACancelar.inscritos} cliente(s) inscrito(s)</span> que quedarán sin cupo.</>
+                                : ' No hay clientes inscritos.'}
+                        </p>
+                        <div>
+                            <label className="block text-sm font-medium text-claro-texto dark:text-oscuro-texto mb-1">Motivo de la cancelación</label>
+                            <textarea
+                                rows={3}
+                                autoFocus
+                                className="w-full px-3 py-2 rounded-lg border border-claro-borde dark:border-oscuro-borde bg-claro-fondo dark:bg-oscuro-fondo text-claro-texto dark:text-oscuro-texto"
+                                placeholder="Ej: Clima adverso, cancha en mantenimiento..."
+                                value={motivoCancelacion}
+                                onChange={e => setMotivoCancelacion(e.target.value)}
+                            />
+                            <p className="text-xs text-claro-texto2 dark:text-oscuro-texto2 mt-1">Los clientes inscritos verán este motivo en "Mis inscripciones".</p>
+                        </div>
+                        <div className="flex justify-end gap-3 pt-2">
+                            <button onClick={() => setEventoACancelar(null)} disabled={cancelando} className="px-4 py-2 rounded-xl font-medium text-claro-texto2 hover:bg-gray-100 dark:text-oscuro-texto2 dark:hover:bg-oscuro-fondo">Volver</button>
+                            <button onClick={handleCancelarEvento} disabled={cancelando} className="px-4 py-2 rounded-xl font-bold bg-red-600 text-white hover:bg-red-700 disabled:opacity-60">
+                                {cancelando ? 'Cancelando...' : 'Cancelar evento'}
+                            </button>
                         </div>
                     </div>
                 </div>
