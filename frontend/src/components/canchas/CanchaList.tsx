@@ -5,6 +5,7 @@
  * CONTROL DE PERMISOS:
  * - Cualquier usuario/visitante: Ver catálogo, consultar horarios y disponibilidad.
  * - Administradores: Crear (+ Nueva Cancha), Editar y Eliminar canchas.
+ * - Empleados: Solo Editar canchas (no pueden crear ni eliminar).
  * ============================================================================
  */
 
@@ -44,6 +45,14 @@ export const CanchaList: React.FC<CanchaListProps> = ({
     usuario && (usuario.rol === 'Admin' || usuario.rol === 'Administrador')
   );
 
+  // Determinamos si el usuario actual es Empleado (puede editar, pero no crear ni eliminar)
+  const isEmpleado = Boolean(
+    usuario && usuario.rol === 'Empleado'
+  );
+
+  // Puede gestionar (admin o empleado)
+  const canManage = isAdmin || isEmpleado;
+
   const [canchas, setCanchas] = useState<Cancha[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isBackendOnline, setIsBackendOnline] = useState(false);
@@ -79,10 +88,15 @@ export const CanchaList: React.FC<CanchaListProps> = ({
     setTimeout(() => setNotification(null), 4500);
   };
 
-  // Manejador para Guardar (Crear o Actualizar) - Solo Admin
+  // Manejador para Guardar (Crear o Actualizar)
+  // Crear: Solo Admin | Actualizar: Admin y Empleado
   const handleSaveCancha = async (formData: CanchaFormData, editingId?: number) => {
-    if (!isAdmin) {
-      showNotification('Acción restringida: Solo administradores pueden gestionar canchas', 'error');
+    if (!canManage) {
+      showNotification('Acción restringida: Se requieren permisos de administrador o empleado', 'error');
+      return;
+    }
+    if (!editingId && !isAdmin) {
+      showNotification('Acción restringida: Solo administradores pueden crear canchas', 'error');
       return;
     }
 
@@ -135,20 +149,22 @@ export const CanchaList: React.FC<CanchaListProps> = ({
       return;
     }
 
-    const confirmDelete = window.confirm(`¿Estás seguro de que deseas eliminar la cancha #${id}?`);
+    const confirmDelete = window.confirm(
+      `¿Estás seguro de que deseas dar de baja la cancha #${id}? La cancha se ocultará del catálogo del sistema (baja lógica) pero su historial de reservas y pagos se conservará intacto en la base de datos.`
+    );
     if (!confirmDelete) return;
 
     try {
       if (isBackendOnline) {
         await canchaApi.delete(id);
-        showNotification(`Cancha #${id} eliminada exitosamente`);
+        showNotification(`Cancha #${id} dada de baja exitosamente (eliminación lógica)`);
         await cargarCanchas();
       } else {
         setCanchas(prev => prev.filter(c => c.id_cancha !== id));
-        showNotification(`Cancha #${id} eliminada (Modo Demo)`);
+        showNotification(`Cancha #${id} dada de baja (Modo Demo)`);
       }
     } catch (err: any) {
-      showNotification(err.message || 'Error al eliminar la cancha', 'error');
+      showNotification(err.message || 'Error al dar de baja la cancha', 'error');
     }
   };
 
@@ -162,8 +178,8 @@ export const CanchaList: React.FC<CanchaListProps> = ({
   };
 
   const handleOpenEditModal = (cancha: Cancha) => {
-    if (!isAdmin) {
-      showNotification('Debes ser Administrador para editar canchas', 'error');
+    if (!canManage) {
+      showNotification('Debes ser Administrador o Empleado para editar canchas', 'error');
       return;
     }
     setCanchaToEdit(cancha);
@@ -230,6 +246,10 @@ export const CanchaList: React.FC<CanchaListProps> = ({
               </svg>
               Nueva Cancha
             </button>
+          ) : isEmpleado ? (
+            <span className="text-xs text-text-muted px-3 py-1 bg-bg-surface rounded-full border border-border-subtle">
+              Empleado: solo puedes editar canchas
+            </span>
           ) : (
             <span className="text-xs text-text-muted px-3 py-1 bg-bg-surface rounded-full border border-border-subtle">
               {isAuthenticated ? `Sesión: ${usuario?.nombre} (${usuario?.rol})` : 'Modo Explorador / Reservas'}
@@ -294,6 +314,7 @@ export const CanchaList: React.FC<CanchaListProps> = ({
               key={cancha.id_cancha}
               cancha={cancha}
               isAdmin={isAdmin}
+              canEditOnly={isEmpleado}
               onEdit={handleOpenEditModal}
               onDelete={handleDeleteCancha}
               onSelectReserva={handleSelectReserva}
@@ -302,13 +323,14 @@ export const CanchaList: React.FC<CanchaListProps> = ({
         </div>
       )}
 
-      {/* Modal Crear / Editar Cancha (Solo Admin) */}
-      {isAdmin && (
+      {/* Modal Crear / Editar Cancha (Admin y Empleado para editar) */}
+      {canManage && (
         <CanchaModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           onSubmit={handleSaveCancha}
           canchaToEdit={canchaToEdit}
+          canEditOnly={isEmpleado}
         />
       )}
     </section>

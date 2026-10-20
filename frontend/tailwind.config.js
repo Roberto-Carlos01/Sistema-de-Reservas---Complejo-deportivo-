@@ -8,34 +8,42 @@ export default {
   theme: {
     extend: {
       colors: {
-        // ========================================
-        // MODO CLARO — base IVORY + EMERALD
-        // ========================================
-        claro: {
-          primario: '#1C3B34',   
-          hover: '#152D27',     
-          tinte: '#E4D9C4',    
-          acento: '#261211',     
-          fondo: '#F6EADA',     
-          tarjeta: '#FBF3E8',   
-          borde: '#E0D2BC',     
-          texto: '#101010',      
-          texto2: '#5A5350',  
+        // Paleta base del Complejo Deportivo
+        palette: {
+          wine: '#261211',
+          petroleum: '#1C3034',
+          ivory: '#F1EADA',
+          dark: '#101010',
         },
 
         // ========================================
-        // MODO OSCURO — base CHARCOAL + EMERALD claro
+        // MODO CLARO — base IVORY (#F1EADA) + PETROLEUM (#1C3034)
+        // ========================================
+        claro: {
+          primario: '#1C3034',   
+          hover: '#142326',     
+          tinte: '#E5DDCB',    
+          acento: '#261211',     
+          fondo: '#F1EADA',     
+          tarjeta: '#FAF5EC',   
+          borde: '#DCD3C1',     
+          texto: '#101010',      
+          texto2: '#4A4643',  
+        },
+
+        // ========================================
+        // MODO OSCURO — base OBSIDIAN (#101010) + PETROLEUM (#1C3034) + IVORY (#F1EADA)
         // ========================================
         oscuro: {
-          primario: '#5FA695',   
-          hover: '#4A8C7C',      
-          tinte: '#1C3B34',      
-          acento: '#8A5A57',    
+          primario: '#5DA797',   
+          hover: '#4C8F80',      
+          tinte: '#1C3034',      
+          acento: '#261211',    
           fondo: '#101010',      
-          tarjeta: '#1A1A1A',   
-          borde: '#2A2A2A',      
-          texto: '#F6EADA',      
-          texto2: '#A09A8E',     
+          tarjeta: '#151d20',   
+          borde: '#26383c',      
+          texto: '#F1EADA',      
+          texto2: '#A8A296',     
         }
       }
     },

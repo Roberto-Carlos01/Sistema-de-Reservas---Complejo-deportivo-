@@ -2,18 +2,23 @@
  * ============================================================================
  * ARCHIVO: CanchaModal.tsx
  * COMPONENTE: Modal para Crear / Editar Cancha Deportiva
- * ACCESO: Solo Administradores
+ * ACCESO:
+ *   - Administrador: Crear nuevas canchas y editar existentes.
+ *   - Empleado: Solo editar canchas existentes (canEditOnly = true).
  * ============================================================================
  */
 
 import React, { useState, useEffect } from 'react';
 import type { Cancha, CanchaFormData } from './cancha.types';
+import { getCanchaImageUrl } from './cancha.api';
 
 interface CanchaModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: CanchaFormData, editingId?: number) => Promise<void>;
   canchaToEdit?: Cancha | null;
+  /** Cuando es true, el usuario solo puede editar (rol Empleado), no crear nuevas canchas */
+  canEditOnly?: boolean;
 }
 
 const INITIAL_FORM: CanchaFormData = {
@@ -27,6 +32,8 @@ const INITIAL_FORM: CanchaFormData = {
   ancho: '',
   hora_apertura: '07:00',
   hora_cierre: '23:00',
+  imagen: null,
+  imagen_url: null,
 };
 
 export const CanchaModal: React.FC<CanchaModalProps> = ({
@@ -34,8 +41,10 @@ export const CanchaModal: React.FC<CanchaModalProps> = ({
   onClose,
   onSubmit,
   canchaToEdit,
+  canEditOnly = false,
 }) => {
   const [formData, setFormData] = useState<CanchaFormData>(INITIAL_FORM);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -54,14 +63,66 @@ export const CanchaModal: React.FC<CanchaModalProps> = ({
         ancho: canchaToEdit.ancho ?? '',
         hora_apertura: canchaToEdit.hora_apertura ? canchaToEdit.hora_apertura.slice(0, 5) : '07:00',
         hora_cierre: canchaToEdit.hora_cierre ? canchaToEdit.hora_cierre.slice(0, 5) : '23:00',
+        imagen: null,
+        imagen_url: canchaToEdit.imagen_url || null,
       });
+      setImagePreview(getCanchaImageUrl(canchaToEdit.imagen_url));
     } else {
       setFormData(INITIAL_FORM);
+      setImagePreview(null);
     }
     setErrorMsg('');
   }, [canchaToEdit, isOpen]);
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        setErrorMsg('La imagen seleccionada supera el límite máximo de 5MB');
+        return;
+      }
+      setFormData(prev => ({ ...prev, imagen: file }));
+      setImagePreview(URL.createObjectURL(file));
+      setErrorMsg('');
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setFormData(prev => ({ ...prev, imagen: null, imagen_url: null }));
+    setImagePreview(null);
+  };
+
   if (!isOpen) return null;
+
+  // Si es empleado y no hay cancha a editar, no se permite crear
+  if (canEditOnly && !isEditing) {
+    return (
+      <div className="modal-backdrop" onClick={onClose}>
+        <div className="modal-content" onClick={e => e.stopPropagation()}>
+          <div className="modal-header">
+            <h2>Acceso Restringido</h2>
+            <button type="button" className="btn-close" onClick={onClose}>×</button>
+          </div>
+          <div style={{ padding: '2rem', textAlign: 'center' }}>
+            <p style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🚫</p>
+            <p style={{ fontWeight: 600, marginBottom: '0.5rem' }}>Sin permisos para crear canchas</p>
+            <p style={{ color: 'var(--text-muted, #888)', fontSize: '0.9rem' }}>
+              El rol <strong>Empleado</strong> solo puede <strong>editar</strong> canchas existentes.
+              Para crear nuevas canchas contacta al Administrador.
+            </p>
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={onClose}
+              style={{ marginTop: '1.5rem' }}
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,6 +164,45 @@ export const CanchaModal: React.FC<CanchaModalProps> = ({
         )}
 
         <form onSubmit={handleSubmit} className="modal-form">
+          {/* Fotografía de la Cancha */}
+          <div className="form-group">
+            <label>Fotografía de la Cancha (Opcional)</label>
+            <div className="image-upload-container">
+              {imagePreview ? (
+                <div className="image-preview-card">
+                  <img src={imagePreview} alt="Previsualización de cancha" className="image-preview-thumbnail" />
+                  <div className="image-preview-actions">
+                    <label htmlFor="cancha-file-upload" className="btn-upload-subtle">
+                      📷 Cambiar imagen
+                    </label>
+                    <button
+                      type="button"
+                      className="btn-upload-danger"
+                      onClick={handleRemoveImage}
+                    >
+                      🗑️ Quitar
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <label htmlFor="cancha-file-upload" className="image-upload-dropzone">
+                  <div className="dropzone-inner">
+                    <span className="dropzone-icon">📷</span>
+                    <span className="dropzone-text">Selecciona una fotografía para la cancha</span>
+                    <span className="dropzone-formats">Formatos permitidos: JPG, PNG, WEBP (Hasta 5MB)</span>
+                  </div>
+                </label>
+              )}
+              <input
+                id="cancha-file-upload"
+                type="file"
+                accept="image/png, image/jpeg, image/webp"
+                className="hidden-file-input"
+                onChange={handleImageChange}
+              />
+            </div>
+          </div>
+
           <div className="form-group">
             <label>Nombre de la Cancha *</label>
             <input

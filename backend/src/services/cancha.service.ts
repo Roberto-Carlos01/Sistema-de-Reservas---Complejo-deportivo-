@@ -15,6 +15,7 @@
 
 import { pool } from '../config/database';
 import type { Cancha, CreateCanchaDTO, UpdateCanchaDTO, CanchaFilters } from '../types/cancha.types';
+import { findCanchaImage } from '../utils/canchaImage.util';
 
 export class CanchaService {
   /**
@@ -54,6 +55,9 @@ export class CanchaService {
     if (filters.estado) {
       values.push(filters.estado.toLowerCase());
       sql += ` AND LOWER(estado) = $${values.length}`;
+    } else {
+      // Exclusión lógica: por defecto no mostrar canchas dadas de baja
+      sql += ` AND LOWER(estado) NOT IN ('inactiva', 'eliminada')`;
     }
 
     // Filtro por búsqueda de texto en nombre o ubicación
@@ -65,7 +69,11 @@ export class CanchaService {
     sql += ` ORDER BY id_cancha ASC`;
 
     const result = await pool.query(sql, values);
-    return result.rows as Cancha[];
+    const canchas = result.rows.map((row) => ({
+      ...row,
+      imagen_url: findCanchaImage(row.id_cancha),
+    }));
+    return canchas as Cancha[];
   }
 
   /**
@@ -95,7 +103,11 @@ export class CanchaService {
       return null;
     }
 
-    return result.rows[0] as Cancha;
+    const row = result.rows[0];
+    return {
+      ...row,
+      imagen_url: findCanchaImage(row.id_cancha),
+    } as Cancha;
   }
 
   /**
@@ -172,7 +184,11 @@ export class CanchaService {
     ];
 
     const result = await pool.query(sql, values);
-    return result.rows[0] as Cancha;
+    const row = result.rows[0];
+    return {
+      ...row,
+      imagen_url: findCanchaImage(row.id_cancha),
+    } as Cancha;
   }
 
   /**
@@ -226,15 +242,22 @@ export class CanchaService {
       return null;
     }
 
-    return result.rows[0] as Cancha;
+    const row = result.rows[0];
+    return {
+      ...row,
+      imagen_url: findCanchaImage(row.id_cancha),
+    } as Cancha;
   }
 
   /**
-   * 6. ELIMINAR UNA CANCHA
+   * 6. ELIMINAR UNA CANCHA (ELIMINACIÓN LÓGICA / SOFT DELETE)
+   * En lugar de DELETE físico que genera conflictos con reservas o pagos,
+   * se actualiza el estado a 'inactiva' para conservarla en BD sin mostrarla en frontend.
    */
   async deleteCancha(id: number): Promise<boolean> {
     const sql = `
-      DELETE FROM cancha
+      UPDATE cancha
+      SET estado = 'inactiva'
       WHERE id_cancha = $1
       RETURNING id_cancha;
     `;

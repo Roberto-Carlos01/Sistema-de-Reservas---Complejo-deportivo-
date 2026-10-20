@@ -69,14 +69,16 @@ const SolicitarRecuperacion = () => {
             <div 
                 className="hidden md:flex md:w-1/2 lg:w-7/12 relative bg-cover bg-center h-full"
                 style={{ 
-                    backgroundImage: "url('https://i0.wp.com/premiumsportsbo.com/wp-content/uploads/2021/11/d1bd114d-526d-417f-a168-2d128f1ed8bb.jpg?resize=750%2C609&ssl=1')" 
+                    backgroundImage: "url('/images/auth-complex.jpg')" 
                 }}
             >
-                <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/40 to-claro-primario/90 dark:to-oscuro-fondo transition-colors duration-300"></div>
+                <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-black/45 to-claro-primario/90 dark:to-oscuro-fondo transition-colors duration-300"></div>
                 
                 <div className="relative z-10 p-10 lg:p-16 flex flex-col justify-between w-full h-full">
                     <div>
-                        <IconCanchas className="w-9 h-9" />
+                        <Link to="/" className="inline-block transition-transform hover:scale-105" title="Ir al inicio">
+                            <IconCanchas className="w-10 h-10" />
+                        </Link>
                     </div>
                     <div className="mb-8">
                         <h1 className="text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight drop-shadow-md">
@@ -93,12 +95,22 @@ const SolicitarRecuperacion = () => {
             <div className="w-full md:w-1/2 lg:w-5/12 h-full flex flex-col items-center p-6 sm:p-8 lg:p-12 overflow-y-auto">
                 <div className="w-full max-w-md bg-claro-tarjeta dark:bg-oscuro-tarjeta p-8 sm:p-10 rounded-2xl shadow-xl border border-claro-borde dark:border-oscuro-borde my-auto">
                     
-                    <div className="flex justify-between items-start mb-2">
-                        <h2 className="text-2xl font-bold text-claro-texto dark:text-oscuro-texto">
-                            Recuperar contraseña
-                        </h2>
+                    <div className="flex items-center justify-between mb-4">
+                        <Link 
+                            to="/" 
+                            className="inline-flex items-center gap-2 text-sm font-semibold text-claro-texto2 hover:text-claro-primario dark:text-oscuro-texto2 dark:hover:text-oscuro-primario transition-colors"
+                        >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                            </svg>
+                            Volver al inicio
+                        </Link>
                         <ThemeToggle />
                     </div>
+
+                    <h2 className="text-2xl font-bold text-claro-texto dark:text-oscuro-texto mb-2">
+                        Recuperar contraseña
+                    </h2>
 
                     {!exito ? (
                         <>

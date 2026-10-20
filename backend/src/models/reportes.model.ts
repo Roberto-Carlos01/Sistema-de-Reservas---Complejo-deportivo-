@@ -247,6 +247,327 @@ export const ReportesModel = {
       metricas: metricasRes.rows[0],
       nuevosClientes: nuevosRes.rows[0].nuevos_clientes
     };
-  }
+  },
 
+  obtenerReporteUsuarios: async (
+    fechaInicio: string,
+    fechaFin: string,
+    tipoUsuario?: string,
+    estado?: string,
+    busqueda?: string
+  ) => {
+    console.log("🚨 LLEGÓ AL MODEL");
+    const condiciones: string[] = [];
+    const valores: any[] = [];
+
+    // =====================================================
+    // FILTRO POR FECHA DE REGISTRO
+    // =====================================================
+
+    if (fechaInicio) {
+      valores.push(fechaInicio);
+      condiciones.push(`u.fecha_registro >= $${valores.length}::date`);
+    }
+
+    if (fechaFin) {
+      valores.push(fechaFin);
+      condiciones.push(
+        `u.fecha_registro < ($${valores.length}::date + INTERVAL '1 day')`
+      );
+    }
+
+    // =====================================================
+    // FILTRO POR TIPO DE USUARIO
+    // =====================================================
+
+    if (tipoUsuario && tipoUsuario !== 'todos') {
+
+      if (tipoUsuario === 'Cliente') {
+        condiciones.push(`c.id_cliente IS NOT NULL`);
+      }
+
+      if (tipoUsuario === 'Empleado') {
+        condiciones.push(`e.id_empleado IS NOT NULL`);
+      }
+
+      if (tipoUsuario === 'Administrador') {
+        condiciones.push(`a.id_administrador IS NOT NULL`);
+      }
+    }
+
+    // =====================================================
+    // FILTRO POR ESTADO
+    // =====================================================
+
+    if (estado && estado !== 'todos') {
+      valores.push(estado);
+      condiciones.push(
+        `LOWER(u.estado_cuenta) = LOWER($${valores.length})`
+      );
+    }
+
+    // =====================================================
+    // BÚSQUEDA
+    // =====================================================
+
+    if (busqueda && busqueda.trim() !== '') {
+
+      valores.push(`%${busqueda.trim()}%`);
+
+      condiciones.push(`
+        (
+          CONCAT(
+            u.nombre,
+            ' ',
+            u.apellido_paterno,
+            ' ',
+            COALESCE(u.apellido_materno, '')
+          ) ILIKE $${valores.length}
+          OR u.correo ILIKE $${valores.length}
+          OR u.telefono ILIKE $${valores.length}
+        )
+      `);
+    }
+
+    const whereClause =
+      condiciones.length > 0
+        ? `WHERE ${condiciones.join(' AND ')}`
+        : '';
+
+    // =====================================================
+    // USUARIOS
+    // =====================================================
+
+    const usuariosQuery = `
+      SELECT
+        u.id_usuario,
+
+        CONCAT(
+          u.nombre,
+          ' ',
+          u.apellido_paterno,
+          ' ',
+          COALESCE(u.apellido_materno, '')
+        ) AS nombre_completo,
+
+        u.correo,
+        u.telefono,
+        u.estado_cuenta,
+        u.fecha_registro,
+
+        CASE
+          WHEN a.id_administrador IS NOT NULL THEN 'Administrador'
+          WHEN e.id_empleado IS NOT NULL THEN 'Empleado'
+          WHEN c.id_cliente IS NOT NULL THEN 'Cliente'
+          ELSE 'Usuario'
+        END AS tipo_usuario
+
+      FROM usuario u
+
+      LEFT JOIN administrador a
+        ON a.id_administrador = u.id_usuario
+
+      LEFT JOIN empleado e
+        ON e.id_empleado = u.id_usuario
+
+      LEFT JOIN cliente c
+        ON c.id_cliente = u.id_usuario
+
+      ${whereClause}
+
+      ORDER BY u.fecha_registro DESC, u.id_usuario DESC;
+    `;
+
+    const { rows: usuarios } = await pool.query(
+      usuariosQuery,
+      valores
+    );
+    console.log("👥 USUARIOS ENCONTRADOS:", usuarios.length);
+    console.log("👥 DATOS:", usuarios);
+    // =====================================================
+    // DISTRIBUCIÓN PARA LA TORTA
+    // =====================================================
+
+    const distribucionQuery = `
+      SELECT
+        CASE
+          WHEN a.id_administrador IS NOT NULL THEN 'Administrador'
+          WHEN e.id_empleado IS NOT NULL THEN 'Empleado'
+          WHEN c.id_cliente IS NOT NULL THEN 'Cliente'
+          ELSE 'Usuario'
+        END AS tipo_usuario,
+
+        COUNT(*)::INTEGER AS cantidad
+
+      FROM usuario u
+
+      LEFT JOIN administrador a
+        ON a.id_administrador = u.id_usuario
+
+      LEFT JOIN empleado e
+        ON e.id_empleado = u.id_usuario
+
+      LEFT JOIN cliente c
+        ON c.id_cliente = u.id_usuario
+
+      ${whereClause}
+
+      GROUP BY
+        CASE
+          WHEN a.id_administrador IS NOT NULL THEN 'Administrador'
+          WHEN e.id_empleado IS NOT NULL THEN 'Empleado'
+          WHEN c.id_cliente IS NOT NULL THEN 'Cliente'
+          ELSE 'Usuario'
+        END
+
+      ORDER BY cantidad DESC;
+    `;
+
+    const { rows: distribucion } = await pool.query(
+      distribucionQuery,
+      valores
+    );
+
+    return {
+      usuarios,
+      distribucion
+    };
+  },
+    obtenerHistorialCliente: async (idCliente: number) => {
+    const query = `
+      SELECT
+        r.id_reserva,
+        r.fecha_reserva,
+        c.nombre AS cancha,
+        c.disciplina,
+        r.hora_inicio,
+        r.hora_fin,
+        r.estado AS estado_reserva,
+        p.monto,
+        p.estado AS estado_pago
+      FROM reserva r
+      INNER JOIN cliente cl
+        ON r.id_cliente = cl.id_cliente
+      INNER JOIN cancha c
+        ON r.id_cancha = c.id_cancha
+      LEFT JOIN pago p
+        ON r.id_reserva = p.id_reserva
+      WHERE cl.id_cliente = $1
+      ORDER BY r.fecha_reserva DESC, r.hora_inicio DESC;
+    `;
+    
+
+    const { rows } = await pool.query(query, [idCliente]);
+
+    return rows;
+  },
+
+  obtenerDetallesPagos: async (fechaInicio: string, fechaFin: string) => {
+    const query = `
+      SELECT
+      p.fecha_pago::date::text AS fecha,
+      c.nombre AS concepto,
+      p.monto AS monto,
+      p.metodo_pago AS metodo,
+      p.estado AS estado
+      FROM pago p
+      INNER JOIN reserva r ON p.id_reserva = r.id_reserva
+      INNER JOIN cancha c  ON r.id_cancha  = c.id_cancha
+      WHERE  r.fecha_reserva >= $1::date
+      AND r.fecha_reserva  < ($2::date + INTERVAL '1 day')
+    `;
+    const values = [fechaInicio, fechaFin];
+    const { rows } = await pool.query(query, values);
+
+    return rows;
+  },
+
+  obtenerHistorialInscripciones: async (idCliente: number) => {
+    const query = `
+        SELECT
+            i.id_inscripcion,
+            e.id_evento,
+            e.nombre_evento,
+            e.descripcion,
+            e.fecha_evento,
+            e.hora_inicio,
+            e.hora_fin,
+            e.tipo_evento,
+            i.fecha_inscripcion,
+            i.estado AS estado_inscripcion,
+            e.estado AS estado_evento
+        FROM inscripcion i
+        INNER JOIN evento e
+            ON i.id_evento = e.id_evento
+        WHERE i.id_cliente = $1
+        ORDER BY e.fecha_evento DESC, e.hora_inicio DESC;
+    `;
+
+    const { rows } = await pool.query(query, [idCliente]);
+
+    return rows;
+},
+// =====================================================
+// 🟢 MÓDULO NUEVO: REPORTE DE EVENTOS Y SERVICIOS
+// =====================================================
+obtenerReporteEventosServicios: async (fechaInicio: string, fechaFin: string) => {
+  // 1. Lista de eventos con canchas y servicios contratados
+  const eventosQuery = `
+    SELECT
+      e.id_evento,
+      e.nombre_evento,
+      e.tipo_evento,
+      TO_CHAR(e.fecha_evento, 'YYYY-MM-DD') AS fecha_evento,
+      e.hora_inicio,
+      e.hora_fin,
+      e.cupo_maximo,
+      LOWER(e.estado) AS estado,
+      COALESCE(STRING_AGG(DISTINCT c.nombre, ', '), 'Sin asignación') AS canchas,
+      COALESCE(STRING_AGG(DISTINCT s.nombre, ', '), 'Sin servicios') AS servicios
+    FROM evento e
+    LEFT JOIN evento_cancha ec ON e.id_evento = ec.id_evento
+    LEFT JOIN cancha c ON ec.id_cancha = c.id_cancha
+    LEFT JOIN evento_servicio es ON e.id_evento = es.id_evento
+    LEFT JOIN servicio s ON es.id_servicio = s.id_servicio
+    WHERE e.fecha_evento >= $1::date
+      AND e.fecha_evento < ($2::date + INTERVAL '1 day')
+    GROUP BY 
+      e.id_evento, 
+      e.nombre_evento, 
+      e.tipo_evento, 
+      e.fecha_evento, 
+      e.hora_inicio, 
+      e.hora_fin, 
+      e.cupo_maximo, 
+      e.estado
+    ORDER BY e.fecha_evento DESC;
+  `;
+
+  // 2. Ingresos acumulados por cada tipo de servicio (para la dona Nivo Pie)
+  const ingresosServiciosQuery = `
+    SELECT
+      s.nombre AS id,
+      s.nombre AS label,
+      COALESCE(SUM(es.costo_contratado), 0)::float AS value
+    FROM evento_servicio es
+    INNER JOIN servicio s ON es.id_servicio = s.id_servicio
+    INNER JOIN evento e ON es.id_evento = e.id_evento
+    WHERE e.fecha_evento >= $1::date
+      AND e.fecha_evento < ($2::date + INTERVAL '1 day')
+    GROUP BY s.id_servicio, s.nombre
+    ORDER BY value DESC;
+  `;
+
+  const values = [fechaInicio, fechaFin];
+
+  const [eventosRes, ingresosRes] = await Promise.all([
+    pool.query(eventosQuery, values),
+    pool.query(ingresosServiciosQuery, values)
+  ]);
+
+  return {
+    eventos: eventosRes.rows,
+    ingresosServicios: ingresosRes.rows
+  };
+},
 }

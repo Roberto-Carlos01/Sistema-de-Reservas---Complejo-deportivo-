@@ -23,6 +23,7 @@ export interface Cancha {
   ancho: number | null;
   hora_apertura: string | null; // Formato HH:mm o HH:mm:ss
   hora_cierre: string | null;   // Formato HH:mm o HH:mm:ss
+  imagen_url?: string | null;   // URL servida por el backend (/uploads/canchas/cancha-X.ext)
 }
 
 // 2. DTO (Data Transfer Object) para crear una Cancha (POST /api/canchas)

@@ -2,6 +2,15 @@ import { Request, Response } from 'express';
 import { EventoModel, Evento } from '../models/eventoModel';
 import { InscripcionModel } from '../models/inscripcionModel';
 
+// Acepta ids_canchas: [1,2,3] (nuevo) o id_cancha: 1 (formato antiguo)
+const normalizarCanchas = (body: any): number[] => {
+    const crudo: any[] = Array.isArray(body.ids_canchas)
+        ? body.ids_canchas
+        : (body.id_cancha ? [body.id_cancha] : []);
+    const ids = crudo.map((n) => parseInt(n)).filter((n) => !isNaN(n));
+    return Array.from(new Set(ids));
+};
+
 export class EventoController {
     static async obtenerServicios(req: Request, res: Response) {
         try {
@@ -16,7 +25,8 @@ export class EventoController {
 
     static async crearEvento(req: Request, res: Response) {
         try {
-            const { nombre_evento, descripcion, fecha_evento, hora_inicio, hora_fin, cupo_maximo, tipo_evento, id_cancha, servicios } = req.body;
+            const { nombre_evento, descripcion, fecha_evento, hora_inicio, hora_fin, cupo_maximo, tipo_evento, servicios } = req.body;
+            const ids_canchas = normalizarCanchas(req.body);
             
             // @ts-ignore
             const id_administrador = (req as any).usuario?.id_usuario;
@@ -25,17 +35,22 @@ export class EventoController {
                 return res.status(401).json({ success: false, message: 'Usuario no autenticado' });
             }
 
-            if (!nombre_evento || !fecha_evento || !hora_inicio || !hora_fin || !id_cancha || !cupo_maximo) {
-                return res.status(400).json({ success: false, message: 'Faltan datos obligatorios para crear el evento.' });
+            if (!nombre_evento || !fecha_evento || !hora_inicio || !hora_fin || ids_canchas.length === 0 || !cupo_maximo) {
+                return res.status(400).json({ success: false, message: 'Faltan datos obligatorios. Recuerde seleccionar al menos una cancha.' });
             }
 
             if (hora_inicio >= hora_fin) {
                 return res.status(400).json({ success: false, message: 'La hora de fin debe ser posterior a la hora de inicio.' });
             }
 
-            const disponible = await EventoModel.verificarDisponibilidadCancha(id_cancha, fecha_evento, hora_inicio, hora_fin);
-            if (!disponible) {
-                return res.status(400).json({ success: false, message: 'La cancha seleccionada no está disponible en ese horario.' });
+            const ocupadas = await EventoModel.obtenerCanchasNoDisponibles(ids_canchas, fecha_evento, hora_inicio, hora_fin);
+            if (ocupadas.length > 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: ocupadas.length === 1
+                        ? `La cancha "${ocupadas[0]}" ya tiene una reserva o evento en ese horario.`
+                        : `Estas canchas ya tienen una reserva o evento en ese horario: ${ocupadas.join(', ')}.`
+                });
             }
 
             const nuevoEvento: Evento = {
@@ -49,7 +64,7 @@ export class EventoController {
                 id_administrador
             };
 
-            const eventoCreado = await EventoModel.crearEvento(nuevoEvento, id_cancha, servicios || []);
+            const eventoCreado = await EventoModel.crearEvento(nuevoEvento, ids_canchas, servicios || []);
 
             res.status(201).json({ success: true, message: 'Evento creado exitosamente.', data: eventoCreado });
         } catch (error) {
@@ -61,25 +76,31 @@ export class EventoController {
     static async editarEvento(req: Request, res: Response) {
         try {
             const id_evento = parseInt(req.params.id);
-            const { nombre_evento, descripcion, fecha_evento, hora_inicio, hora_fin, cupo_maximo, tipo_evento, id_cancha, servicios } = req.body;
+            const { nombre_evento, descripcion, fecha_evento, hora_inicio, hora_fin, cupo_maximo, tipo_evento, servicios } = req.body;
+            const ids_canchas = normalizarCanchas(req.body);
 
-            if (!nombre_evento || !fecha_evento || !hora_inicio || !hora_fin || !id_cancha || !cupo_maximo) {
-                return res.status(400).json({ success: false, message: 'Faltan datos obligatorios para editar el evento.' });
+            if (!nombre_evento || !fecha_evento || !hora_inicio || !hora_fin || ids_canchas.length === 0 || !cupo_maximo) {
+                return res.status(400).json({ success: false, message: 'Faltan datos obligatorios. Recuerde seleccionar al menos una cancha.' });
             }
 
             if (hora_inicio >= hora_fin) {
                 return res.status(400).json({ success: false, message: 'La hora de fin debe ser posterior a la hora de inicio.' });
             }
 
-            const disponible = await EventoModel.verificarDisponibilidadCancha(id_cancha, fecha_evento, hora_inicio, hora_fin, undefined, id_evento);
-            if (!disponible) {
-                return res.status(400).json({ success: false, message: 'La cancha seleccionada no está disponible en ese horario.' });
+            const ocupadas = await EventoModel.obtenerCanchasNoDisponibles(ids_canchas, fecha_evento, hora_inicio, hora_fin, id_evento);
+            if (ocupadas.length > 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: ocupadas.length === 1
+                        ? `La cancha "${ocupadas[0]}" ya tiene una reserva o evento en ese horario.`
+                        : `Estas canchas ya tienen una reserva o evento en ese horario: ${ocupadas.join(', ')}.`
+                });
             }
 
             const eventoActualizado = await EventoModel.actualizarEvento(
                 id_evento,
                 { nombre_evento, descripcion, fecha_evento, hora_inicio, hora_fin, cupo_maximo, tipo_evento },
-                id_cancha,
+                ids_canchas,
                 servicios || []
             );
 
@@ -93,10 +114,11 @@ export class EventoController {
     static async reprogramarEvento(req: Request, res: Response) {
         try {
             const id_evento = parseInt(req.params.id);
-            const { nombre_evento, descripcion, fecha_evento, hora_inicio, hora_fin, cupo_maximo, tipo_evento, id_cancha, servicios } = req.body;
+            const { nombre_evento, descripcion, fecha_evento, hora_inicio, hora_fin, cupo_maximo, tipo_evento, servicios } = req.body;
+            const ids_canchas = normalizarCanchas(req.body);
 
-            if (!nombre_evento || !fecha_evento || !hora_inicio || !hora_fin || !id_cancha || !cupo_maximo) {
-                return res.status(400).json({ success: false, message: 'Faltan datos obligatorios para reprogramar el evento.' });
+            if (!nombre_evento || !fecha_evento || !hora_inicio || !hora_fin || ids_canchas.length === 0 || !cupo_maximo) {
+                return res.status(400).json({ success: false, message: 'Faltan datos obligatorios. Recuerde seleccionar al menos una cancha.' });
             }
 
             if (hora_inicio >= hora_fin) {
@@ -108,15 +130,20 @@ export class EventoController {
                 return res.status(400).json({ success: false, message: 'La nueva fecha y hora deben ser futuras.' });
             }
 
-            const disponible = await EventoModel.verificarDisponibilidadCancha(id_cancha, fecha_evento, hora_inicio, hora_fin, undefined, id_evento);
-            if (!disponible) {
-                return res.status(400).json({ success: false, message: 'La cancha seleccionada no está disponible en ese horario.' });
+            const ocupadas = await EventoModel.obtenerCanchasNoDisponibles(ids_canchas, fecha_evento, hora_inicio, hora_fin, id_evento);
+            if (ocupadas.length > 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: ocupadas.length === 1
+                        ? `La cancha "${ocupadas[0]}" ya tiene una reserva o evento en ese horario.`
+                        : `Estas canchas ya tienen una reserva o evento en ese horario: ${ocupadas.join(', ')}.`
+                });
             }
 
             const eventoReprogramado = await EventoModel.reprogramarEvento(
                 id_evento,
                 { nombre_evento, descripcion, fecha_evento, hora_inicio, hora_fin, cupo_maximo, tipo_evento },
-                id_cancha,
+                ids_canchas,
                 servicios || []
             );
 
@@ -137,6 +164,22 @@ export class EventoController {
             };
             
             const eventos = await EventoModel.obtenerEventos(filtros);
+
+            // El cliente solo ve lo que debe pagar él (costo_por_persona), no el costo total del evento
+            const rol = (req as any).usuario?.rol?.toLowerCase();
+            if (rol === 'cliente') {
+                const paraCliente = eventos.map((ev: any) => {
+                    const { costo_total, total_servicios, ...resto } = ev;
+                    return {
+                        ...resto,
+                        servicios_adicionales: (ev.servicios_adicionales || []).map((s: any) => ({ id_servicio: s.id_servicio, nombre: s.nombre })),
+                        canchas_asignadas: (ev.canchas_asignadas || []).map(({ precio_hora, ...c }: any) => c),
+                        cancha_asignada: ev.cancha_asignada ? (({ precio_hora, ...c }: any) => c)(ev.cancha_asignada) : null
+                    };
+                });
+                return res.json({ success: true, data: paraCliente });
+            }
+
             res.json({ success: true, data: eventos });
         } catch (error) {
             console.error('Error al obtener eventos:', error);
@@ -212,6 +255,33 @@ export class EventoController {
         } catch (error) {
             console.error('Error al obtener inscripciones:', error);
             res.status(500).json({ success: false, message: 'Error interno al obtener inscripciones.' });
+        }
+    }
+
+    static async obtenerInscritos(req: Request, res: Response) {
+        try {
+            const id_evento = parseInt(req.params.id);
+            const inscritos = await EventoModel.obtenerInscritosEvento(id_evento);
+            res.json({ success: true, data: inscritos });
+        } catch (error) {
+            console.error('Error al obtener inscritos:', error);
+            res.status(500).json({ success: false, message: 'Error interno al obtener los inscritos.' });
+        }
+    }
+
+    static async canchasOcupadas(req: Request, res: Response) {
+        try {
+            const { fecha, hora_inicio, hora_fin, excluir } = req.query as Record<string, string>;
+            if (!fecha || !hora_inicio || !hora_fin) {
+                return res.json({ success: true, data: [] });
+            }
+            const ids = await EventoModel.obtenerCanchasOcupadas(
+                fecha, hora_inicio, hora_fin, excluir ? parseInt(excluir) : undefined
+            );
+            res.json({ success: true, data: ids });
+        } catch (error) {
+            console.error('Error al consultar canchas ocupadas:', error);
+            res.status(500).json({ success: false, message: 'Error interno al consultar disponibilidad.' });
         }
     }
 }

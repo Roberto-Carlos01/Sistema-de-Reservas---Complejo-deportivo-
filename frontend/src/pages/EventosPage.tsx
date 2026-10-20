@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import IconCanchas from '../assets/icon_canchas.svg?react';
+import ToastMensaje from '../components/eventos/ToastMensaje';
 
 interface CanchaAsignada {
     id_cancha: number;
@@ -29,8 +30,9 @@ interface Evento {
     tipo_evento: string;
     estado: string;
     cancha_asignada?: CanchaAsignada;
+    canchas_asignadas?: CanchaAsignada[];
     servicios_adicionales?: Servicio[];
-    costo_total?: number;
+    costo_por_persona?: number;
 }
 
 const EventosPage = () => {
@@ -130,12 +132,7 @@ const EventosPage = () => {
                 </p>
             </div>
 
-            {mensaje && (
-                <div className={`p-4 rounded-xl text-sm font-medium ${mensaje.tipo === 'exito' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'}`}>
-                    {mensaje.texto}
-                    <button onClick={() => setMensaje(null)} className="float-right font-bold">&times;</button>
-                </div>
-            )}
+            <ToastMensaje mensaje={mensaje} onClose={() => setMensaje(null)} />
 
             {/* Filtros */}
             <div className="bg-claro-tarjeta dark:bg-oscuro-tarjeta p-4 rounded-2xl border border-claro-borde dark:border-oscuro-borde flex flex-col md:flex-row gap-4">
@@ -219,8 +216,9 @@ const EventosPage = () => {
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                             </svg>
                                             <span className="text-sm font-medium line-clamp-1">
-                                                {evento.cancha_asignada?.nombre}
-                                                {evento.cancha_asignada?.ubicacion ? ` · ${evento.cancha_asignada.ubicacion}` : ''}
+                                                {(evento.canchas_asignadas || []).length > 0
+                                                    ? (evento.canchas_asignadas || []).map(c => c.nombre).join(', ')
+                                                    : 'Sin cancha asignada'}
                                             </span>
                                         </div>
                                         <div className="flex items-center gap-3 text-claro-texto2 dark:text-oscuro-texto2">
@@ -229,9 +227,9 @@ const EventosPage = () => {
                                             </svg>
                                             <span className="text-sm font-medium">Cupos restantes: {evento.cupos_restantes} / {evento.cupo_maximo}</span>
                                         </div>
-                                        {typeof evento.costo_total === 'number' && (
-                                            <div className="flex items-center gap-3 text-claro-texto2 dark:text-oscuro-texto2">
-                                                <span className="text-sm font-medium">Costo: Bs. {evento.costo_total.toFixed(2)}</span>
+                                        {typeof evento.costo_por_persona === 'number' && (
+                                            <div className="flex items-center gap-3 text-claro-texto dark:text-oscuro-texto">
+                                                <span className="text-sm font-bold">Tu costo: Bs. {Number(evento.costo_por_persona).toFixed(2)} <span className="font-normal text-claro-texto2 dark:text-oscuro-texto2">por persona</span></span>
                                             </div>
                                         )}
                                     </div>

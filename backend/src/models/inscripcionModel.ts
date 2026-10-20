@@ -85,11 +85,14 @@ export class InscripcionModel {
         const query = `
             SELECT i.id_inscripcion, i.estado as estado_inscripcion, i.fecha_inscripcion, 
                    e.id_evento, e.nombre_evento, e.fecha_evento, e.hora_inicio, e.hora_fin, e.tipo_evento, e.estado as estado_evento,
-                   c.nombre as cancha_nombre
+                   (
+                       SELECT string_agg(c.nombre, ', ' ORDER BY c.nombre)
+                       FROM evento_cancha ec
+                       JOIN cancha c ON ec.id_cancha = c.id_cancha
+                       WHERE ec.id_evento = e.id_evento
+                   ) as cancha_nombre
             FROM inscripcion i
             JOIN evento e ON i.id_evento = e.id_evento
-            LEFT JOIN evento_cancha ec ON e.id_evento = ec.id_evento
-            LEFT JOIN cancha c ON ec.id_cancha = c.id_cancha
             WHERE i.id_cliente = $1
             ORDER BY e.fecha_evento DESC, e.hora_inicio DESC
         `;

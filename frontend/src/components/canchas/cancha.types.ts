@@ -17,6 +17,7 @@ export interface Cancha {
     ancho: number | null;
     hora_apertura: string;
     hora_cierre: string;
+    imagen_url?: string | null;
 }
 
 export interface CanchaFormData {
@@ -30,6 +31,8 @@ export interface CanchaFormData {
   ancho: string | number;
   hora_apertura: string;
   hora_cierre: string;
+  imagen?: File | null;
+  imagen_url?: string | null;
 }
 
 export interface DisciplinaOption {

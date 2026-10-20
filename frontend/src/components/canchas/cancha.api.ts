@@ -125,6 +125,32 @@ export const canchaApi = {
   },
 
   async create(data: CanchaFormData): Promise<Cancha> {
+    if (data.imagen instanceof File) {
+      const formData = new FormData();
+      formData.append('nombre', data.nombre);
+      if (data.disciplina) formData.append('disciplina', data.disciplina);
+      if (data.capacidad !== '' && data.capacidad !== null && data.capacidad !== undefined) {
+        formData.append('capacidad', String(data.capacidad));
+      }
+      formData.append('precio_hora', String(data.precio_hora));
+      formData.append('estado', data.estado || 'disponible');
+      if (data.ubicacion) formData.append('ubicacion', data.ubicacion);
+      if (data.largo !== '' && data.largo !== null && data.largo !== undefined) {
+        formData.append('largo', String(data.largo));
+      }
+      if (data.ancho !== '' && data.ancho !== null && data.ancho !== undefined) {
+        formData.append('ancho', String(data.ancho));
+      }
+      if (data.hora_apertura) formData.append('hora_apertura', data.hora_apertura);
+      if (data.hora_cierre) formData.append('hora_cierre', data.hora_cierre);
+      formData.append('imagen', data.imagen);
+
+      const res = await api.post('/canchas', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return res.data?.data || res.data;
+    }
+
     const payload = {
       nombre: data.nombre,
       disciplina: data.disciplina || null,
@@ -143,7 +169,28 @@ export const canchaApi = {
   },
 
   async update(id: number, data: Partial<CanchaFormData>): Promise<Cancha> {
+    if (data.imagen instanceof File) {
+      const formData = new FormData();
+      if (data.nombre !== undefined) formData.append('nombre', data.nombre);
+      if (data.disciplina !== undefined) formData.append('disciplina', data.disciplina || '');
+      if (data.capacidad !== undefined) formData.append('capacidad', data.capacidad ? String(data.capacidad) : '');
+      if (data.precio_hora !== undefined) formData.append('precio_hora', String(data.precio_hora));
+      if (data.estado !== undefined) formData.append('estado', data.estado || 'disponible');
+      if (data.ubicacion !== undefined) formData.append('ubicacion', data.ubicacion || '');
+      if (data.largo !== undefined) formData.append('largo', data.largo ? String(data.largo) : '');
+      if (data.ancho !== undefined) formData.append('ancho', data.ancho ? String(data.ancho) : '');
+      if (data.hora_apertura !== undefined) formData.append('hora_apertura', data.hora_apertura || '');
+      if (data.hora_cierre !== undefined) formData.append('hora_cierre', data.hora_cierre || '');
+      formData.append('imagen', data.imagen);
+
+      const res = await api.patch(`/canchas/${id}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return res.data?.data || res.data;
+    }
+
     const payload: any = { ...data };
+    delete payload.imagen;
     if (data.precio_hora !== undefined) payload.precio_hora = Number(data.precio_hora);
     if (data.capacidad !== undefined) payload.capacidad = data.capacidad ? Number(data.capacidad) : null;
     if (data.largo !== undefined) payload.largo = data.largo ? Number(data.largo) : null;
@@ -157,3 +204,44 @@ export const canchaApi = {
     await api.delete(`/canchas/${id}`);
   },
 };
+
+/**
+ * Convierte una ruta relativa de imagen del backend en URL absoluta accesible
+ */
+export const getCanchaImageUrl = (imagen_url?: string | null): string | null => {
+  if (!imagen_url) return null;
+  if (imagen_url.startsWith('http://') || imagen_url.startsWith('https://')) {
+    return imagen_url;
+  }
+  const apiUrl = (import.meta.env.VITE_API_URL as string) || 'http://localhost:4000/api';
+  const backendBase = apiUrl.replace(/\/api\/?$/, '');
+  const cleanPath = imagen_url.startsWith('/') ? imagen_url : `/${imagen_url}`;
+  return `${backendBase}${cleanPath}`;
+};
+
+/**
+ * Provee una imagen deportiva de alta calidad por defecto según la disciplina
+ */
+export const getDisciplinaDefaultImage = (disciplina: string | null): string => {
+  const d = (disciplina || '').toLowerCase();
+  if (d.includes('futbol') || d.includes('futsal')) {
+    return 'https://images.unsplash.com/photo-1529900240041-22f1df4d1897?w=800&auto=format&fit=crop&q=80';
+  }
+  if (d.includes('padel')) {
+    return 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=800&auto=format&fit=crop&q=80';
+  }
+  if (d.includes('tenis')) {
+    return 'https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?w=800&auto=format&fit=crop&q=80';
+  }
+  if (d.includes('basquet')) {
+    return 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=800&auto=format&fit=crop&q=80';
+  }
+  if (d.includes('voley')) {
+    return 'https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?w=800&auto=format&fit=crop&q=80';
+  }
+  if (d.includes('atletismo')) {
+    return 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=800&auto=format&fit=crop&q=80';
+  }
+  return 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800&auto=format&fit=crop&q=80';
+};
+
