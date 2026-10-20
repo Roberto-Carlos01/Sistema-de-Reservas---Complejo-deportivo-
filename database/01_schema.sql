@@ -72,19 +72,20 @@ CREATE TABLE servicio (
 
 -- ---------- EVENTO ----------
 CREATE TABLE evento (
-    id_evento          SERIAL PRIMARY KEY,
-    nombre_evento      VARCHAR(150) NOT NULL,
-    descripcion        TEXT,
-    fecha_evento       DATE NOT NULL,
-    hora_inicio        TIME NOT NULL,
-    hora_fin           TIME NOT NULL,
-    cupo_maximo        INTEGER,
-    tipo_evento        VARCHAR(50),
-    motivo_cancelacion TEXT,
-    fecha_cancelacion  TIMESTAMP,
-    estado             VARCHAR(20) NOT NULL DEFAULT 'programado',
-    id_administrador   INTEGER NOT NULL REFERENCES administrador(id_administrador),
-    fecha_creacion     TIMESTAMP NOT NULL DEFAULT now()
+    id_evento              SERIAL PRIMARY KEY,
+    nombre_evento          VARCHAR(150) NOT NULL,
+    descripcion            TEXT,
+    fecha_evento           DATE NOT NULL,
+    hora_inicio            TIME NOT NULL,
+    hora_fin               TIME NOT NULL,
+    cupo_maximo            INTEGER,
+    tipo_evento            VARCHAR(50),
+    motivo_cancelacion     TEXT,
+    fecha_cancelacion      TIMESTAMP,
+    id_usuario_cancelacion INTEGER REFERENCES usuario(id_usuario),
+    estado                 VARCHAR(20) NOT NULL DEFAULT 'programado',
+    id_administrador       INTEGER NOT NULL REFERENCES administrador(id_administrador),
+    fecha_creacion         TIMESTAMP NOT NULL DEFAULT now()
 );
 
 -- ---------- RESERVA ----------
