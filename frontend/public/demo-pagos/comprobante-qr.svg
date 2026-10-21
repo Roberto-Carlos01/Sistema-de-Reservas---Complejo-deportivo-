@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="620" viewBox="0 0 960 620">
+  <rect width="960" height="620" fill="#f0f4f1"/>
+  <rect x="100" y="48" width="760" height="524" rx="22" fill="#fff" stroke="#cbd5d1" stroke-width="3"/>
+  <text x="145" y="105" fill="#173f30" font-family="Arial,sans-serif" font-size="27" font-weight="700">PAGO QR · RECIBO DE EJEMPLO</text>
+  <text x="145" y="157" fill="#586b61" font-family="Arial,sans-serif" font-size="17">Referencia: RES-DEMO-3150 · Operación: QR-DEMO-0003</text>
+  <g transform="translate(155 205)" fill="#173f30">
+    <rect x="0" y="0" width="160" height="160" rx="4" fill="#fff" stroke="#173f30" stroke-width="12"/>
+    <rect x="22" y="22" width="48" height="48"/><rect x="90" y="22" width="48" height="48"/>
+    <rect x="22" y="90" width="48" height="48"/><path d="M88 88h20v20H88zM120 88h18v18h-18zM90 120h18v18H90zM120 120h18v18h-18z"/>
+  </g>
+  <text x="385" y="245" fill="#586b61" font-family="Arial,sans-serif" font-size="18">Método</text>
+  <text x="385" y="280" fill="#26352e" font-family="Arial,sans-serif" font-size="22" font-weight="700">QR</text>
+  <text x="385" y="330" fill="#586b61" font-family="Arial,sans-serif" font-size="18">Importe ilustrativo</text>
+  <text x="385" y="370" fill="#173f30" font-family="Arial,sans-serif" font-size="28" font-weight="700">Bs. 70,00</text>
+  <rect x="385" y="415" width="370" height="62" rx="9" fill="#fff1f2" stroke="#e11d48" stroke-width="3"/>
+  <text x="570" y="455" text-anchor="middle" fill="#be123c" font-family="Arial,sans-serif" font-size="29" font-weight="800">MUESTRA · NO PAGADO</text>
+  <text x="145" y="530" fill="#64746b" font-family="Arial,sans-serif" font-size="15">QR decorativo. No escanear ni usar para transferencias reales.</text>
+</svg>

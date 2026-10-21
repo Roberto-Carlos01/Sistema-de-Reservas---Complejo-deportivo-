@@ -50,10 +50,21 @@ router.patch('/verificar/:id_pago', verificarToken, esAdminOEmpleado, PagoContro
 // Obtener pagos pendientes de verificación (Admin/Empleado)
 router.get('/pendientes', verificarToken, esAdminOEmpleado, PagoController.pagosPendientes);
 
+// Historial completo para filtros y demostración (Admin/Empleado)
+router.get('/todos', verificarToken, esAdminOEmpleado, PagoController.todosLosPagos);
+router.get('/conciliacion', verificarToken, esAdminOEmpleado, PagoController.conciliacionPagos);
+
 // Historial de pagos del cliente
 router.get('/historial', verificarToken, PagoController.historialPagos);
 
+// Historial de intentos de la reserva y consulta administrativa
+router.get('/reserva/:id_reserva/revision', verificarToken, esAdminOEmpleado, PagoController.revisionPagoReserva);
+router.get('/reserva/:id_reserva', verificarToken, PagoController.obtenerPagosPorReserva);
+
 // Reintentar pago después de rechazo
 router.post('/reintentar/:id_reserva', verificarToken, PagoController.reintentarPago);
+
+// Reembolso registrado manualmente tras ejecutar la devolución por el canal externo
+router.post('/reembolso/:id_pago', verificarToken, esAdminOEmpleado, PagoController.registrarReembolso);
 
 export default router;

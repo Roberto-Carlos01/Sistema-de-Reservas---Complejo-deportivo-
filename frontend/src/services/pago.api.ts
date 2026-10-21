@@ -11,21 +11,36 @@ export interface PagoDetalle {
 export interface CrearPagoInput {
     id_reserva: number;
     monto: number;
-    metodo_pago: 'tarjeta' | 'qr' | 'transferencia';
-    numero_tarjeta?: string;
+    metodo_pago: 'presencial' | 'tarjeta' | 'qr';
+    comprobante?: File;
+    nro_comprobante?: string;
     referencia_pasarela?: string;
-    detalles: PagoDetalle[];
+    detalles?: PagoDetalle[];
 }
 
 export const crearPago = async (data: CrearPagoInput) => {
-    const metodoPago = data.metodo_pago === 'tarjeta'
-        ? 'tarjeta_debito'
-        : data.metodo_pago;
-    const response = await api.post('/pagos/procesar', {
-        id_reserva: data.id_reserva,
-        metodo_pago: metodoPago,
-        referencia_pasarela: data.referencia_pasarela,
-        modo_demo: true
+    if (data.metodo_pago === 'presencial') {
+        const response = await api.post('/pagos/procesar', {
+            id_reserva: data.id_reserva,
+            metodo_pago: data.metodo_pago,
+            monto: data.monto,
+            referencia_pasarela: data.referencia_pasarela
+        });
+        return response.data;
+    }
+    if (!data.comprobante || !data.nro_comprobante?.trim()) {
+        throw new Error('Adjunta el comprobante y el número de operación.');
+    }
+    const formData = new FormData();
+    formData.append('id_reserva', String(data.id_reserva));
+    formData.append('monto', String(data.monto));
+    formData.append('metodo_pago', data.metodo_pago);
+    formData.append('nro_comprobante', data.nro_comprobante.trim());
+    formData.append('referencia_pasarela', data.referencia_pasarela || `RES-${data.id_reserva}`);
+    formData.append('comprobante', data.comprobante);
+    formData.append('detalles', JSON.stringify(data.detalles || []));
+    const response = await api.post('/pagos/procesar-con-comprobante', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
     });
     return response.data;
 };
@@ -33,4 +48,9 @@ export const crearPago = async (data: CrearPagoInput) => {
 export const obtenerPagosReserva = async (idReserva: number) => {
     const response = await api.get(`/pagos/reserva/${idReserva}`);
     return response.data.data || [];
+};
+
+export const reintentarPago = async (idReserva: number) => {
+    const response = await api.post(`/pagos/reintentar/${idReserva}`);
+    return response.data;
 };

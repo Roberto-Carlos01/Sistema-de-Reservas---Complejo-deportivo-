@@ -1,6 +1,7 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 
 export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+export const API_ORIGIN = new URL(API_URL, window.location.origin).origin;
 
 const api: AxiosInstance = axios.create({
     baseURL: API_URL,

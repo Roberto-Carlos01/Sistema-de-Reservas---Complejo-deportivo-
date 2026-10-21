@@ -97,7 +97,7 @@ CREATE TABLE reserva (
     canal_reserva   VARCHAR(20) NOT NULL,
     hora_inicio     TIME NOT NULL,
     hora_fin        TIME NOT NULL,
-    id_cliente      INTEGER NOT NULL REFERENCES cliente(id_cliente),
+    id_cliente      INTEGER REFERENCES cliente(id_cliente),
     id_cancha       INTEGER NOT NULL REFERENCES cancha(id_cancha),
     id_empleado     INTEGER REFERENCES empleado(id_empleado),
     fecha_gestion   TIMESTAMP,

@@ -1,17 +1,17 @@
-FROM node:20-alpine
+FROM node:20-alpine AS build
 WORKDIR /app
 
-# Copia solo package.json (NO el package-lock.json)
-COPY package.json ./
-
-# Genera un package-lock.json válido para Linux/Alpine
-RUN npm install --package-lock-only
-
-# Ahora sí, instala con el lockfile correcto
+COPY package.json package-lock.json ./
 RUN npm ci
 
 COPY . .
+ARG VITE_API_URL=http://localhost:4000/api
+ENV VITE_API_URL=${VITE_API_URL}
+RUN npm run build
 
-EXPOSE 5173
+FROM nginx:1.27-alpine
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /app/dist /usr/share/nginx/html
 
-CMD ["npm", "run", "dev", "--", "--host"]
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
