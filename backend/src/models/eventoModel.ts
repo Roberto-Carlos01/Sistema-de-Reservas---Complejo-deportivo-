@@ -352,6 +352,16 @@ export class EventoModel {
                 throw new Error('No se puede editar un evento que ya ocurrió');
             }
 
+            const fechaActual = actual.fecha_evento.toISOString().substring(0, 10);
+            const cambioInicio = evento.fecha_evento !== fechaActual
+                || String(evento.hora_inicio).substring(0, 5) !== String(actual.hora_inicio).substring(0, 5);
+            if (cambioInicio) {
+                const nuevoInicio = new Date(`${evento.fecha_evento}T${evento.hora_inicio}`);
+                if (isNaN(nuevoInicio.getTime()) || nuevoInicio <= new Date()) {
+                    throw new Error('La nueva fecha y hora de inicio deben ser posteriores al momento actual.');
+                }
+            }
+
             const inscritosRes = await client.query(
                 `SELECT COUNT(*) as inscritos FROM inscripcion WHERE id_evento = $1 AND estado = 'confirmada'`,
                 [id_evento]

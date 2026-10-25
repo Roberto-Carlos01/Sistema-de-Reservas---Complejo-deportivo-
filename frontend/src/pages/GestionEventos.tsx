@@ -93,6 +93,27 @@ const GestionEventos = () => {
     const handleGuardarEvento = async (e: React.FormEvent) => {
         e.preventDefault();
 
+        // Validar fecha y hora al crear o reprogramar un evento.
+        // Al editar uno existente, el backend valida los cambios de fecha/hora.
+        if (!eventoEnEdicion || modoReprogramar) {
+            if (!formData.fecha_evento || !formData.hora_inicio) {
+                setMensaje({
+                    tipo: 'error',
+                    texto: 'Debe indicar la fecha y la hora de inicio del evento.'
+                });
+                return;
+            }
+
+            const inicio = new Date(`${formData.fecha_evento}T${formData.hora_inicio}`);
+            if (inicio <= new Date()) {
+                setMensaje({
+                    tipo: 'error',
+                    texto: 'La fecha y hora de inicio deben ser posteriores al momento actual.'
+                });
+                return;
+            }
+        }
+
         if (idsCanchas.length === 0) {
             setMensaje({ tipo: 'error', texto: 'Seleccione al menos una cancha para el evento.' });
             return;
@@ -332,6 +353,11 @@ const GestionEventos = () => {
 
     const previewCostos = calcularCostoTotalPreview();
 
+    // Fecha actual en formato YYYY-MM-DD según la hora local del navegador.
+    // Evita cambios de día causados por la conversión a UTC con toISOString().
+    const ahora = new Date();
+    const hoy = `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}-${String(ahora.getDate()).padStart(2, '0')}`;
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -509,7 +535,7 @@ const GestionEventos = () => {
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
                                                 <label className="block text-sm font-medium text-claro-texto dark:text-oscuro-texto mb-1">Fecha</label>
-                                                <input required type="date" className="w-full px-3 py-2 rounded-lg border border-claro-borde dark:border-oscuro-borde bg-claro-fondo dark:bg-oscuro-fondo" value={formData.fecha_evento} onChange={e => setFormData({...formData, fecha_evento: e.target.value})} />
+                                                <input required type="date" min={hoy} className="w-full px-3 py-2 rounded-lg border border-claro-borde dark:border-oscuro-borde bg-claro-fondo dark:bg-oscuro-fondo" value={formData.fecha_evento} onChange={e => setFormData({...formData, fecha_evento: e.target.value})} />
                                             </div>
                                             <div>
                                                 <label className="block text-sm font-medium text-claro-texto dark:text-oscuro-texto mb-1">Aforo Máximo</label>

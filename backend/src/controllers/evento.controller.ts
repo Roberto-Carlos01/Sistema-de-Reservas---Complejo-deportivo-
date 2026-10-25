@@ -11,6 +11,14 @@ const normalizarCanchas = (body: any): number[] => {
     return Array.from(new Set(ids));
 };
 
+// Devuelve un mensaje de error si la fecha/hora de inicio no es futura (o es inválida)
+const validarInicioFuturo = (fecha: string, hora: string): string | null => {
+    const inicio = new Date(`${fecha}T${hora}`);
+    if (isNaN(inicio.getTime())) return 'La fecha u hora del evento no es válida.';
+    if (inicio <= new Date()) return 'La fecha y hora de inicio deben ser posteriores al momento actual.';
+    return null;
+};
+
 export class EventoController {
     static async obtenerServicios(req: Request, res: Response) {
         try {
@@ -42,6 +50,11 @@ export class EventoController {
             if (hora_inicio >= hora_fin) {
                 return res.status(400).json({ success: false, message: 'La hora de fin debe ser posterior a la hora de inicio.' });
             }
+
+            const errorFecha = validarInicioFuturo(fecha_evento, hora_inicio);
+if (errorFecha) {
+    return res.status(400).json({ success: false, message: errorFecha });
+}
 
             const ocupadas = await EventoModel.obtenerCanchasNoDisponibles(ids_canchas, fecha_evento, hora_inicio, hora_fin);
             if (ocupadas.length > 0) {
@@ -124,10 +137,10 @@ export class EventoController {
             if (hora_inicio >= hora_fin) {
                 return res.status(400).json({ success: false, message: 'La hora de fin debe ser posterior a la hora de inicio.' });
             }
-
-            const fechaHoraFin = new Date(`${fecha_evento}T${hora_fin}`);
-            if (fechaHoraFin <= new Date()) {
-                return res.status(400).json({ success: false, message: 'La nueva fecha y hora deben ser futuras.' });
+            
+            const errorFecha = validarInicioFuturo(fecha_evento, hora_inicio);
+            if (errorFecha) {
+                return res.status(400).json({ success: false, message: errorFecha });
             }
 
             const ocupadas = await EventoModel.obtenerCanchasNoDisponibles(ids_canchas, fecha_evento, hora_inicio, hora_fin, id_evento);
