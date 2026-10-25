@@ -58,6 +58,12 @@ const Navbar = ({ abierto, onCerrar }: NavbarProps) => {
             icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z', 
             roles: ['Administrador', 'Empleado'] 
         },
+        {
+            path: '/verificar-pagos',
+            name: 'Verificar pagos',
+            icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
+            roles: ['Administrador', 'Empleado']
+        },
         // --- EVENTOS: catálogo/inscripción, visible para todos los roles ---
         { 
             path: '/eventos', 
@@ -87,7 +93,14 @@ const Navbar = ({ abierto, onCerrar }: NavbarProps) => {
         }
     ];
 
-    const rolActual: Rol = (usuario?.rol as Rol) || 'Usuario';
+    const rolNormalizado = usuario?.rol?.trim().toLowerCase();
+    const rolActual: Rol = rolNormalizado === 'admin' || rolNormalizado === 'administrador'
+        ? 'Administrador'
+        : rolNormalizado === 'empleado'
+            ? 'Empleado'
+            : rolNormalizado === 'cliente'
+                ? 'Cliente'
+                : 'Usuario';
     const menuFiltrado = menuItems.filter(item => item.roles.includes(rolActual));
 
     return (

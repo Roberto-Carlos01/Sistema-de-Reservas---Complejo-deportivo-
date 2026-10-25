@@ -97,7 +97,7 @@ CREATE TABLE reserva (
     canal_reserva   VARCHAR(20) NOT NULL,
     hora_inicio     TIME NOT NULL,
     hora_fin        TIME NOT NULL,
-    id_cliente      INTEGER NOT NULL REFERENCES cliente(id_cliente),
+    id_cliente      INTEGER REFERENCES cliente(id_cliente),
     id_cancha       INTEGER NOT NULL REFERENCES cancha(id_cancha),
     id_empleado     INTEGER REFERENCES empleado(id_empleado),
     fecha_gestion   TIMESTAMP,
@@ -114,7 +114,7 @@ CREATE TABLE pago (
     referencia_pasarela VARCHAR(100),
     nro_comprobante     VARCHAR(50),
     comprobante_url     TEXT,
-    estado              VARCHAR(20) NOT NULL DEFAULT 'pagado',
+    estado              VARCHAR(30) NOT NULL DEFAULT 'pagado',
     id_reserva          INTEGER NOT NULL UNIQUE REFERENCES reserva(id_reserva)
 );
 

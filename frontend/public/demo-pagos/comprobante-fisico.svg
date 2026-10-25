@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="620" viewBox="0 0 960 620">
+  <rect width="960" height="620" fill="#eef2f0"/>
+  <rect x="90" y="50" width="780" height="520" rx="18" fill="#fff" stroke="#cbd5d1" stroke-width="3"/>
+  <rect x="90" y="50" width="780" height="96" rx="18" fill="#173f30"/>
+  <path d="M90 128h780v18H90z" fill="#173f30"/>
+  <text x="132" y="105" fill="#fff" font-family="Arial,sans-serif" font-size="28" font-weight="700">SPORTPLEX · CAJA</text>
+  <text x="132" y="205" fill="#26352e" font-family="Arial,sans-serif" font-size="22" font-weight="700">REGISTRO DE PAGO PRESENCIAL</text>
+  <text x="132" y="265" fill="#52625a" font-family="Arial,sans-serif" font-size="18">Reserva: RES-DEMO-1042</text>
+  <text x="132" y="310" fill="#52625a" font-family="Arial,sans-serif" font-size="18">Concepto: Alquiler de cancha</text>
+  <text x="132" y="355" fill="#52625a" font-family="Arial,sans-serif" font-size="18">Método: Físico · Muestra sin valor comercial</text>
+  <text x="132" y="425" fill="#173f30" font-family="Arial,sans-serif" font-size="27" font-weight="700">TOTAL: Bs. 120,00</text>
+  <g transform="rotate(-12 690 440)">
+    <rect x="565" y="385" width="260" height="70" rx="8" fill="#fff" fill-opacity=".8" stroke="#be123c" stroke-width="5"/>
+    <text x="590" y="430" fill="#be123c" font-family="Arial,sans-serif" font-size="32" font-weight="800">MUESTRA</text>
+  </g>
+  <text x="132" y="520" fill="#64746b" font-family="Arial,sans-serif" font-size="15">Imagen ilustrativa para demostración · No acredita una transacción real</text>
+</svg>

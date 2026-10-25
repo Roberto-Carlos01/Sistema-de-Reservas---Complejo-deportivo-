@@ -93,7 +93,7 @@ const GestionReservas = () => {
                     <tbody className="text-claro-texto dark:text-oscuro-texto">
     {reservas.map((r) => (
         <tr key={r.id_reserva} className="border-t border-claro-borde dark:border-oscuro-borde">
-            <td className="p-3" data-label="Cliente">{r.cliente_nombre} {r.apellido_paterno}</td>
+            <td className="p-3" data-label="Cliente">{r.id_cliente ? `${r.cliente_nombre} ${r.apellido_paterno || ''}`.trim() : 'Anónimo'}</td>
             <td className="p-3" data-label="Cancha">{r.cancha_nombre}</td>
             <td className="p-3" data-label="Fecha">{new Date(r.fecha_reserva).toLocaleDateString()}</td>
             <td className="p-3" data-label="Horario">{r.hora_inicio} - {r.hora_fin}</td>

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="620" viewBox="0 0 960 620">
+  <rect width="960" height="620" fill="#edf2f4"/>
+  <rect x="100" y="48" width="760" height="524" rx="24" fill="#fff" stroke="#cbd5e1" stroke-width="3"/>
+  <text x="145" y="112" fill="#183247" font-family="Arial,sans-serif" font-size="25" font-weight="700">COMPROBANTE · EJEMPLO</text>
+  <path d="M145 145h670" stroke="#d5dee4" stroke-width="2"/>
+  <text x="145" y="205" fill="#586b77" font-family="Arial,sans-serif" font-size="18">Comercio</text>
+  <text x="815" y="205" text-anchor="end" fill="#263943" font-family="Arial,sans-serif" font-size="18" font-weight="700">SportPlex (demo)</text>
+  <text x="145" y="255" fill="#586b77" font-family="Arial,sans-serif" font-size="18">Reserva</text>
+  <text x="815" y="255" text-anchor="end" fill="#263943" font-family="Arial,sans-serif" font-size="18" font-weight="700">RES-DEMO-2081</text>
+  <text x="145" y="305" fill="#586b77" font-family="Arial,sans-serif" font-size="18">Método</text>
+  <text x="815" y="305" text-anchor="end" fill="#263943" font-family="Arial,sans-serif" font-size="18" font-weight="700">Tarjeta · operación ficticia</text>
+  <text x="145" y="355" fill="#586b77" font-family="Arial,sans-serif" font-size="18">Monto de ejemplo</text>
+  <text x="815" y="355" text-anchor="end" fill="#183247" font-family="Arial,sans-serif" font-size="24" font-weight="700">Bs. 95,00</text>
+  <rect x="145" y="400" width="670" height="72" rx="10" fill="#fff1f2" stroke="#e11d48" stroke-width="3"/>
+  <text x="480" y="447" text-anchor="middle" fill="#be123c" font-family="Arial,sans-serif" font-size="32" font-weight="800">SOLO DEMOSTRACIÓN</text>
+  <text x="145" y="525" fill="#64748b" font-family="Arial,sans-serif" font-size="15">No contiene datos bancarios ni corresponde a una compra real.</text>
+</svg>

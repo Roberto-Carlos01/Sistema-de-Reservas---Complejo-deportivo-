@@ -20,8 +20,9 @@ const Dashboard = () => {
         year: 'numeric'
     });
 
-    const esAdmin = usuario?.rol === 'Administrador' || usuario?.rol === 'Admin';
-    const esEmpleado = usuario?.rol === 'Empleado';
+    const rolActual = usuario?.rol?.trim().toLowerCase();
+    const esAdmin = rolActual === 'administrador' || rolActual === 'admin';
+    const esEmpleado = rolActual === 'empleado';
     const esCliente = !esAdmin && !esEmpleado;
 
     return (
@@ -206,7 +207,7 @@ const Dashboard = () => {
                                         <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">Finanzas</span>
                                     </div>
                                     <p className="text-claro-texto2 dark:text-oscuro-texto2 text-sm leading-relaxed mb-6">
-                                        Revisa los comprobantes QR virtuales, aprueba o rechaza pagos pendientes.
+                                        Revisa pagos por método y estado, abre comprobantes y aprueba o rechaza solicitudes.
                                     </p>
                                 </div>
                                 <Link 

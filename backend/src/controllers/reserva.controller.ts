@@ -12,14 +12,17 @@ export const ReservaController = {
             console.log('🔍 [CONTROLLER] Usuario del token:', { id_usuario, rol });
             console.log('🔍 [CONTROLLER] Body recibido:', body);
 
-            let id_cliente = body.id_cliente;
-            const rolNormalizado = rol?.toLowerCase();
+            let id_cliente = body.id_cliente ? Number(body.id_cliente) : null;
+            const rolNormalizado = String(rol || '').trim().toLowerCase();
             
             if (rolNormalizado === 'cliente') {
                 id_cliente = id_usuario;
             }
-            if ((rolNormalizado === 'empleado' || rolNormalizado === 'admin' || rolNormalizado === 'administrador') && !id_cliente) {
-                return res.status(400).json({ error: 'Debe seleccionar un cliente para registrar la reserva.' });
+            if (!['cliente', 'empleado', 'admin', 'administrador'].includes(rolNormalizado)) {
+                return res.status(403).json({ error: 'No tienes permiso para registrar esta reserva.' });
+            }
+            if (id_cliente !== null && (!Number.isInteger(id_cliente) || id_cliente <= 0)) {
+                return res.status(400).json({ error: 'El cliente seleccionado no es válido.' });
             }
 
             const payloadFinal = {

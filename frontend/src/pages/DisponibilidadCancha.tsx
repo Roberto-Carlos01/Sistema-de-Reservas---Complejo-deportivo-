@@ -42,6 +42,8 @@ const DisponibilidadCancha = () => {
     const [fechaSeleccionada, setFechaSeleccionada] = useState(fechaClave(new Date()));
     const [clientes, setClientes] = useState<any[]>([]);
     const [clienteSeleccionado, setClienteSeleccionado] = useState('');
+    const [busquedaCliente, setBusquedaCliente] = useState('');
+    const [reservaAnonima, setReservaAnonima] = useState(false);
     const [reservasMes, setReservasMes] = useState<ReservaAgenda[]>([]);
     const [reservasDia, setReservasDia] = useState<ReservaAgenda[]>([]);
     const [horasSeleccionadas, setHorasSeleccionadas] = useState<number[]>([]);
@@ -96,9 +98,6 @@ const DisponibilidadCancha = () => {
                     return rol === 'cliente';
                 });
                 setClientes(clientesFiltrados);
-                if (clientesFiltrados.length > 0) {
-                    setClienteSeleccionado(String(clientesFiltrados[0].id_cliente ?? clientesFiltrados[0].id_usuario ?? clientesFiltrados[0].id));
-                }
             } catch {
                 setClientes([]);
             }
@@ -196,6 +195,13 @@ const DisponibilidadCancha = () => {
     const subtotalAdicionales = detallesAdicionales.reduce((total, detalle) => total + detalle.subtotal, 0);
     const subtotalReserva = Number(cancha?.precio_hora || 0) * horasSeleccionadas.length;
     const totalReserva = subtotalReserva + subtotalAdicionales;
+    const normalizarBusqueda = (valor: unknown) => String(valor || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('es').trim();
+    const clientesFiltrados = clientes.filter((cliente) => {
+        const termino = normalizarBusqueda(busquedaCliente);
+        const nombre = `${cliente.nombre || ''} ${cliente.apellidos || cliente.paterno || cliente.apellido_paterno || cliente.apellidoPaterno || ''} ${cliente.materno || cliente.apellido_materno || ''}`;
+        return !termino || [nombre, cliente.correo, cliente.telefono, cliente.ci_nit, cliente.id].some((valor) => normalizarBusqueda(valor).includes(termino));
+    }).slice(0, 8);
+    const clienteActual = clientes.find((cliente) => String(cliente.id_cliente ?? cliente.id_usuario ?? cliente.id) === clienteSeleccionado);
 
     const hoy = fechaClave(new Date());
     const cambiarMes = (salto: number) => {
@@ -206,8 +212,8 @@ const DisponibilidadCancha = () => {
 
     const crearReserva = async () => {
         if (!cancha || !horaSeleccionada) return;
-        if (esAdmin && !clienteSeleccionado) {
-            setError('Selecciona un cliente antes de confirmar la reserva como administrador.');
+        if (esAdmin && !reservaAnonima && !clienteSeleccionado) {
+            setError('Busca y selecciona un cliente o marca la reserva como anónima.');
             return;
         }
         setError('');
@@ -221,7 +227,7 @@ const DisponibilidadCancha = () => {
                 observaciones: observaciones.trim() || undefined
             };
 
-            if (esAdmin) {
+            if (esAdmin && !reservaAnonima) {
                 payload.id_cliente = Number(clienteSeleccionado);
             }
 
@@ -338,21 +344,42 @@ const DisponibilidadCancha = () => {
                 </div>
 
                 {esAdmin && (
-                    <div className="mt-4">
-                        <label className="block text-sm font-medium text-claro-texto dark:text-oscuro-texto">Cliente asociado *</label>
-                        <select value={clienteSeleccionado} onChange={(event) => setClienteSeleccionado(event.target.value)} className="mt-1 w-full rounded-lg border border-claro-borde bg-transparent p-3 text-claro-texto dark:text-oscuro-texto">
-                            <option value="">Seleccione un cliente</option>
-                            {clientes.map((cliente) => {
-                                const idCliente = cliente.id_cliente ?? cliente.id_usuario ?? cliente.id;
-                                const nombreCompleto = `${cliente.nombre || ''} ${cliente.paterno || cliente.apellido_paterno || cliente.apellidoPaterno || ''}`.trim();
-                                return (
-                                    <option key={idCliente} value={String(idCliente)}>
-                                        {nombreCompleto || cliente.correo || `Cliente #${idCliente}`}
-                                    </option>
-                                );
-                            })}
-                        </select>
-                        {clientes.length === 0 && <p className="mt-1 text-xs text-red-600">No se encontraron clientes disponibles.</p>}
+                    <div className="mt-4 rounded-lg border border-claro-borde p-4 dark:border-oscuro-borde">
+                        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+                            <div>
+                                <label htmlFor="buscar-cliente" className="block text-sm font-semibold text-claro-texto dark:text-oscuro-texto">Cliente asociado</label>
+                                <p className="mt-1 text-xs text-claro-texto2 dark:text-oscuro-texto2">Busca por CI/NIT, teléfono, correo, nombre o ID.</p>
+                            </div>
+                            <label className="flex items-center gap-2 text-sm font-medium text-claro-texto dark:text-oscuro-texto">
+                                <input type="checkbox" checked={reservaAnonima} onChange={(event) => {
+                                    setReservaAnonima(event.target.checked);
+                                    setClienteSeleccionado('');
+                                    setError('');
+                                }} className="h-4 w-4 accent-claro-primario" />
+                                Reserva anónima
+                            </label>
+                        </div>
+                        {reservaAnonima ? (
+                            <p className="mt-3 rounded-md bg-claro-tinte p-3 text-sm text-claro-texto2 dark:bg-oscuro-tinte dark:text-oscuro-texto2">No se asociará información personal a esta reserva.</p>
+                        ) : (
+                            <>
+                                <input id="buscar-cliente" type="search" value={busquedaCliente} onChange={(event) => setBusquedaCliente(event.target.value)} placeholder="Ej. CI/NIT, teléfono o correo" autoComplete="off" className="mt-3 w-full rounded-lg border border-claro-borde bg-claro-fondo p-3 text-claro-texto placeholder:text-claro-texto2 dark:border-oscuro-borde dark:bg-oscuro-fondo dark:text-oscuro-texto dark:placeholder:text-oscuro-texto2" />
+                                {clienteActual && <div className="mt-3 flex items-center justify-between gap-3 rounded-md border border-green-300 bg-green-50 p-3 text-sm dark:border-green-800 dark:bg-green-950/30">
+                                    <div className="min-w-0"><p className="font-semibold text-green-900 dark:text-green-200">{clienteActual.nombre} {clienteActual.apellidos || clienteActual.paterno || clienteActual.apellido_paterno || ''}</p><p className="truncate text-xs text-green-800 dark:text-green-300">{clienteActual.ci_nit ? `CI/NIT ${clienteActual.ci_nit}` : clienteActual.correo} · ID {clienteSeleccionado}</p></div>
+                                    <button type="button" onClick={() => setClienteSeleccionado('')} className="shrink-0 text-sm font-semibold text-green-900 underline dark:text-green-200">Cambiar</button>
+                                </div>}
+                                {!clienteActual && <div className="mt-2 max-h-56 overflow-y-auto rounded-md border border-claro-borde dark:border-oscuro-borde" role="listbox" aria-label="Resultados de clientes">
+                                    {clientesFiltrados.length ? clientesFiltrados.map((cliente) => {
+                                        const idCliente = cliente.id_cliente ?? cliente.id_usuario ?? cliente.id;
+                                        const apellidos = cliente.apellidos || [cliente.paterno || cliente.apellido_paterno, cliente.materno || cliente.apellido_materno].filter(Boolean).join(' ');
+                                        return <button key={idCliente} type="button" role="option" aria-selected={false} onClick={() => { setClienteSeleccionado(String(idCliente)); setError(''); }} className="block w-full border-b border-claro-borde px-3 py-2 text-left last:border-b-0 hover:bg-claro-tinte dark:border-oscuro-borde dark:hover:bg-oscuro-tinte">
+                                            <span className="block text-sm font-medium text-claro-texto dark:text-oscuro-texto">{cliente.nombre} {apellidos}</span>
+                                            <span className="mt-0.5 block text-xs text-claro-texto2 dark:text-oscuro-texto2">{[cliente.ci_nit && `CI/NIT ${cliente.ci_nit}`, cliente.telefono, cliente.correo, `ID ${idCliente}`].filter(Boolean).join(' · ')}</span>
+                                        </button>;
+                                    }) : <p className="p-3 text-sm text-claro-texto2 dark:text-oscuro-texto2">{clientes.length ? 'No hay coincidencias. Prueba con otro dato.' : 'No se pudieron cargar clientes.'}</p>}
+                                </div>}
+                            </>
+                        )}
                     </div>
                 )}
 

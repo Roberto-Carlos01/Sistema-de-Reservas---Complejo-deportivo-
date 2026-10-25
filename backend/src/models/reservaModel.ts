@@ -13,7 +13,7 @@ export const ReservaModel = {
             data.canal_reserva,
             data.hora_inicio,
             data.hora_fin,
-            data.id_cliente,
+            data.id_cliente ?? null,
             data.id_cancha,
             data.id_empleado || null,
             data.estado || 'pendiente',
@@ -55,11 +55,11 @@ export const ReservaModel = {
 
     obtenerTodas: async (filtros?: any) => {
         let query = `
-            SELECT r.*, c.nombre as cancha_nombre, u.nombre as cliente_nombre, u.apellido_paterno
+            SELECT r.*, c.nombre as cancha_nombre, COALESCE(u.nombre, 'Anónimo') as cliente_nombre, COALESCE(u.apellido_paterno, '') as apellido_paterno
             FROM reserva r
             JOIN cancha c ON r.id_cancha = c.id_cancha
-            JOIN cliente cl ON r.id_cliente = cl.id_cliente
-            JOIN usuario u ON cl.id_cliente = u.id_usuario
+            LEFT JOIN cliente cl ON r.id_cliente = cl.id_cliente
+            LEFT JOIN usuario u ON cl.id_cliente = u.id_usuario
             WHERE 1=1
         `;
         const values: any[] = [];

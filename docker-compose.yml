@@ -9,7 +9,7 @@ services:
       POSTGRES_DB: bdcomplejodeportivo
       TZ: America/La_Paz
     ports:
-      - "5432:5432"
+      - "${DB_PORT_HOST:-5433}:5432"
     volumes:
       - ./database:/docker-entrypoint-initdb.d
       - pgdata:/var/lib/postgresql/data
@@ -38,26 +38,48 @@ services:
     ports:
       - "4000:4000"
     env_file:
-      - ./backend/.env
+      - path: ./backend/.env
+        required: false
     environment:
+      PORT: 4000
       DB_HOST: db
       DB_PORT: 5432
+      DB_USER: ${DB_USER:-limber}
+      DB_PASSWORD: ${DB_PASSWORD:-123456}
+      DB_NAME: ${DB_NAME:-bdcomplejodeportivo}
+      JWT_SECRET: ${JWT_SECRET:-local-only-change-before-deployment}
+      EMAIL_USER: ${EMAIL_USER:-}
+      EMAIL_PASS: ${EMAIL_PASS:-}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:${FRONTEND_PORT:-5173}}
     volumes:
       - ./backend/uploads:/app/uploads
     depends_on:
       db:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:${BACKEND_PORT_HOST:-4000}/api}
     container_name: sports_frontend
     restart: no
     ports:
-      - "5173:5173"
-    environment:
-      VITE_API_URL: http://localhost:4000/api
+      - "${FRONTEND_PORT:-5173}:80"
     depends_on:
       - backend
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
 volumes:
   pgdata:
