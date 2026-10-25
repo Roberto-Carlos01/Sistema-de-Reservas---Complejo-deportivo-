@@ -221,7 +221,9 @@ VALUES
     (6, 5, '2026-09-24 12:45:00', 'confirmada', NULL),
 
     -- Torneo de Vóley Playero (evento cancelado)
-    (6, 6, '2026-09-25 15:30:00', 'confirmada', NULL);
+    (6, 6, '2026-09-25 15:30:00', 'confirmada', NULL)
+ON CONFLICT (id_cliente, id_evento) DO NOTHING;
+
 -- ============================================================
 -- DATOS DE DEMOSTRACIÓN - RESERVAS DE MARÍA LÓPEZ
 -- Cliente: id_cliente = 6
@@ -276,7 +278,9 @@ VALUES
         NULL,
         '2026-09-26 14:05:00',
         'Reserva confirmada para presentación'
-    );
+    )
+ON CONFLICT DO NOTHING;
+
 -- =========================================================
 -- SINCRONIZAR SECUENCIAS CON LOS IDs INSERTADOS
 -- =========================================================

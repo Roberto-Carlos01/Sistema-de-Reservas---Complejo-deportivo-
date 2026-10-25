@@ -164,7 +164,12 @@ const login = async (req: Request, res: Response) => {
             return res.status(401).json({ error: 'Credenciales inválidas' });
         }
 
-        if (usuario.estado_cuenta?.toLowerCase() === 'inactivo') {
+        const estadoCuenta = usuario.estado_cuenta?.toLowerCase();
+        if (estadoCuenta === 'eliminado') {
+            return res.status(403).json({ error: 'Tu cuenta ha sido eliminada' });
+        }
+
+        if (estadoCuenta === 'inactivo') {
             return res.status(403).json({ error: 'Tu cuenta ha sido desactivada' });
         }
 

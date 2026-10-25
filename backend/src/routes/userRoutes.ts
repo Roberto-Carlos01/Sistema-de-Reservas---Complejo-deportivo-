@@ -7,6 +7,7 @@ import {
     cambiarEstadoUsuario, 
     actualizarUsuario, 
     eliminarUsuario, 
+    obtenerImpactoUsuario,
     obtenerUsuarioCompletoPorId 
 } from '../controllers/userController';
 import { verificarToken } from '../middlewares/authMiddleware';
@@ -52,6 +53,7 @@ router.get('/', verificarToken, listarUsuarios);
 router.post('/', verificarToken, crearUsuario);
 router.put('/estado/:id', verificarToken, cambiarEstadoUsuario);
 router.put('/:id', verificarToken, actualizarUsuario);
+router.get('/:id/impacto', verificarToken, obtenerImpactoUsuario);
 router.delete('/:id', verificarToken, eliminarUsuario);
 
 router.get('/:id', verificarToken, obtenerUsuarioCompletoPorId);

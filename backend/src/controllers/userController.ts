@@ -421,7 +421,10 @@ const actualizarUsuario = async (req: Request, res: Response) => {
             nivel_acceso: esAdmin ? (nivel_acceso || 'Total') : null
         };
 
-        await UsuarioModel.actualizarUsuario(id, usuarioData, rolData);
+        const actualizado = await UsuarioModel.actualizarUsuario(id, usuarioData, rolData);
+        if (!actualizado) {
+            return res.status(404).json({ error: 'Usuario no encontrado o eliminado' });
+        }
 
         res.status(200).json({ mensaje: 'Usuario actualizado con éxito' });
 
@@ -453,11 +456,31 @@ const eliminarUsuario = async (req: Request, res: Response) => {
             return res.status(404).json({ error: 'Usuario no encontrado' });
         }
 
-        res.status(200).json({ mensaje: 'Usuario eliminado' });
+        res.status(200).json({ mensaje: 'Usuario marcado como eliminado' });
 
     } catch (error) {
         console.error('Error en eliminarUsuario:', error);
         res.status(500).json({ error: 'Error al eliminar usuario' });
+    }
+};
+
+const obtenerImpactoUsuario = async (req: Request, res: Response) => {
+    const { id } = req.params;
+
+    try {
+        if (!id || isNaN(Number(id))) {
+            return res.status(400).json({ error: 'ID de usuario inválido' });
+        }
+
+        const impacto = await UsuarioModel.obtenerImpactoUsuario(id);
+        if (!impacto) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+
+        res.status(200).json({ impacto });
+    } catch (error) {
+        console.error('Error en obtenerImpactoUsuario:', error);
+        res.status(500).json({ error: 'Error al consultar los registros del usuario' });
     }
 };
 
@@ -493,5 +516,6 @@ export {
     crearUsuario,
     actualizarUsuario,
     eliminarUsuario,
+    obtenerImpactoUsuario,
     obtenerUsuarioCompletoPorId
 };

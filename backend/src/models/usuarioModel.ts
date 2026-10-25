@@ -191,6 +191,7 @@ const UsuarioModel = {
             LEFT JOIN administrador a ON u.id_usuario = a.id_administrador
             LEFT JOIN empleado e ON u.id_usuario = e.id_empleado
             LEFT JOIN cliente c ON u.id_usuario = c.id_cliente
+            WHERE LOWER(u.estado_cuenta) <> 'eliminado'
             ORDER BY u.id_usuario DESC
         `;
         const result = await pool.query(query);
@@ -201,7 +202,8 @@ const UsuarioModel = {
         const query = `
             UPDATE usuario 
             SET estado_cuenta = $1 
-            WHERE id_usuario = $2 
+            WHERE id_usuario = $2
+              AND LOWER(estado_cuenta) <> 'eliminado'
             RETURNING id_usuario, nombre, correo, estado_cuenta
         `;
         const result = await pool.query(query, [nuevoEstado, id_usuario]);
@@ -380,7 +382,7 @@ const UsuarioModel = {
         }
     },
 
-    actualizarUsuario: async (id_usuario: number | string, usuarioData: UsuarioData, rolData: RolData): Promise<{ id_usuario: number | string }> => {
+    actualizarUsuario: async (id_usuario: number | string, usuarioData: UsuarioData, rolData: RolData): Promise<{ id_usuario: number | string } | undefined> => {
         const client = await pool.connect();
         try {
             await client.query('BEGIN');
@@ -405,10 +407,16 @@ const UsuarioModel = {
                 contador++;
             }
 
-            query += ` WHERE id_usuario = $${contador}`;
+            query += ` WHERE id_usuario = $${contador}
+                       AND LOWER(estado_cuenta) <> 'eliminado'
+                       RETURNING id_usuario`;
             values.push(id_usuario);
 
-            await client.query(query, values);
+            const usuarioActualizado = await client.query(query, values);
+            if (usuarioActualizado.rowCount === 0) {
+                await client.query('ROLLBACK');
+                return undefined;
+            }
 
             if (usuarioData.rol === 'Cliente') {
                 const existe = await client.query('SELECT id_cliente FROM cliente WHERE id_cliente = $1', [id_usuario]);
@@ -465,8 +473,63 @@ const UsuarioModel = {
         }
     },
 
+    obtenerImpactoUsuario: async (id_usuario: number | string): Promise<{
+        reservas: number;
+        pagos: number;
+        inscripciones: number;
+        eventos: number;
+        canchasAdministradas: number;
+        canchasControladas: number;
+        supervisiones: number;
+        total: number;
+    } | undefined> => {
+        const query = `
+            SELECT
+                (SELECT COUNT(*)::int FROM reserva
+                 WHERE id_cliente = u.id_usuario OR id_empleado = u.id_usuario) AS reservas,
+                (SELECT COUNT(*)::int
+                 FROM pago p
+                 JOIN reserva r ON r.id_reserva = p.id_reserva
+                 WHERE r.id_cliente = u.id_usuario OR r.id_empleado = u.id_usuario) AS pagos,
+                (SELECT COUNT(*)::int FROM inscripcion WHERE id_cliente = u.id_usuario) AS inscripciones,
+                (SELECT COUNT(*)::int FROM evento WHERE id_administrador = u.id_usuario) AS eventos,
+                (SELECT COUNT(*)::int FROM administra WHERE id_administrador = u.id_usuario) AS "canchasAdministradas",
+                (SELECT COUNT(*)::int FROM controla WHERE id_empleado = u.id_usuario) AS "canchasControladas",
+                (SELECT COUNT(*)::int
+                 FROM supervisa
+                 WHERE id_administrador = u.id_usuario OR id_empleado = u.id_usuario) AS supervisiones
+            FROM usuario u
+            WHERE u.id_usuario = $1
+              AND LOWER(u.estado_cuenta) <> 'eliminado'
+        `;
+        const result = await pool.query(query, [id_usuario]);
+        const impacto = result.rows[0] as Omit<{
+            reservas: number;
+            pagos: number;
+            inscripciones: number;
+            eventos: number;
+            canchasAdministradas: number;
+            canchasControladas: number;
+            supervisiones: number;
+            total: number;
+        }, 'total'> | undefined;
+
+        if (!impacto) return undefined;
+
+        return {
+            ...impacto,
+            total: Object.values(impacto).reduce((suma, cantidad) => suma + cantidad, 0)
+        };
+    },
+
     eliminarUsuario: async (id_usuario: number | string): Promise<{ id_usuario: number } | undefined> => {
-        const query = `DELETE FROM usuario WHERE id_usuario = $1 RETURNING id_usuario`;
+        const query = `
+            UPDATE usuario
+            SET estado_cuenta = 'eliminado'
+            WHERE id_usuario = $1
+              AND LOWER(estado_cuenta) <> 'eliminado'
+            RETURNING id_usuario
+        `;
         const result = await pool.query(query, [id_usuario]);
         return result.rows[0];
     },

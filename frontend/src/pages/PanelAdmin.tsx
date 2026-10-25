@@ -20,6 +20,24 @@ interface Usuario {
     [key: string]: unknown;
 }
 
+interface ImpactoUsuario {
+    reservas: number;
+    pagos: number;
+    inscripciones: number;
+    eventos: number;
+    canchasAdministradas: number;
+    canchasControladas: number;
+    supervisiones: number;
+    total: number;
+}
+
+type TipoNotificacion = 'exito' | 'error' | 'info';
+
+interface Notificacion {
+    tipo: TipoNotificacion;
+    mensaje: string;
+}
+
 // Helper: obtiene el ID real sin importar cómo lo llame el backend
 const obtenerId = (user: Usuario): number | string | undefined => {
     return user.id ?? user.id_usuario ?? user._id;
@@ -47,6 +65,14 @@ const PanelAdmin = () => {
     const [cargando, setCargando] = useState<boolean>(true);
     const [error, setError] = useState<string>('');
     const [eliminandoId, setEliminandoId] = useState<number | string | null>(null);
+    const [errorAccion, setErrorAccion] = useState<string>('');
+    const [usuarioBaja, setUsuarioBaja] = useState<Usuario | null>(null);
+    const [impactoBaja, setImpactoBaja] = useState<ImpactoUsuario | null>(null);
+    const [errorBaja, setErrorBaja] = useState<string>('');
+    const [procesandoBaja, setProcesandoBaja] = useState<boolean>(false);
+
+    // Notificación emergente (toast)
+    const [notificacion, setNotificacion] = useState<Notificacion | null>(null);
 
     const [modalAbierto, setModalAbierto] = useState<boolean>(false);
     const [usuarioIdEditar, setUsuarioIdEditar] = useState<number | null>(null);
@@ -57,6 +83,20 @@ const PanelAdmin = () => {
 
     const [paginaActual, setPaginaActual] = useState<number>(1);
     const [porPagina, setPorPagina] = useState<number>(10);
+
+    const mostrarNotificacion = useCallback(
+        (tipo: TipoNotificacion, mensaje: string): void => {
+            setNotificacion({ tipo, mensaje });
+        },
+        []
+    );
+
+    // Auto-dismiss de la notificación
+    useEffect(() => {
+        if (!notificacion) return;
+        const timer = setTimeout(() => setNotificacion(null), 3000);
+        return () => clearTimeout(timer);
+    }, [notificacion]);
 
     const fetchUsuarios = useCallback(async (): Promise<void> => {
         try {
@@ -88,78 +128,110 @@ const PanelAdmin = () => {
     const abrirModalEditar = (usuario: Usuario): void => {
         const id = obtenerId(usuario);
         if (id === undefined || id === null) {
-            alert('No se pudo identificar el usuario a editar.');
+            setErrorAccion('No se pudo identificar el usuario a editar.');
             return;
         }
+        setErrorAccion('');
         setUsuarioIdEditar(Number(id));
         setModalAbierto(true);
     };
 
     const handleGuardarUsuario = (): void => {
+        const fueEdicion = usuarioIdEditar !== null;
         fetchUsuarios();
+        mostrarNotificacion(
+            'exito',
+            fueEdicion ? 'Usuario actualizado con éxito' : 'Usuario creado con éxito'
+        );
     };
 
     // =====================================================
     // ELIMINAR USUARIO
     // =====================================================
+    const cerrarModalBaja = (): void => {
+        if (procesandoBaja) return;
+        setUsuarioBaja(null);
+        setImpactoBaja(null);
+        setErrorBaja('');
+    };
+
+    const mensajeErrorBaja = (err: any): string => {
+        const status = err.response?.status;
+        const mensajeBackend =
+            err.response?.data?.error ||
+            err.response?.data?.message ||
+            err.message ||
+            'Error desconocido';
+
+        if (status === 401 || status === 403) {
+            return 'No tienes permisos para gestionar usuarios o tu sesión expiró. Vuelve a iniciar sesión.';
+        }
+        if (status === 404) {
+            return 'El usuario no existe o ya fue eliminado.';
+        }
+        return `No se pudo completar la operación: ${mensajeBackend}`;
+    };
+
+    const ejecutarBaja = async (accion: 'desactivar' | 'eliminar'): Promise<void> => {
+        const id = usuarioBaja ? obtenerId(usuarioBaja) : undefined;
+        if (id === undefined || id === null || id === '') {
+            setErrorBaja('No se pudo identificar el usuario.');
+            return;
+        }
+
+        setProcesandoBaja(true);
+        setEliminandoId(id);
+        setErrorBaja('');
+
+        try {
+            if (accion === 'desactivar') {
+                await api.put(`/usuarios/estado/${id}`, { estado: 'inactivo' });
+                mostrarNotificacion('exito', 'Usuario desactivado con éxito');
+            } else {
+                await api.delete(`/usuarios/${id}`);
+                mostrarNotificacion('exito', 'Usuario eliminado con éxito');
+            }
+
+            setUsuarioBaja(null);
+            setImpactoBaja(null);
+            await fetchUsuarios();
+        } catch (err: any) {
+            console.error('Error al gestionar la baja del usuario:', err.response?.data || err.message);
+            setErrorBaja(mensajeErrorBaja(err));
+        } finally {
+            setProcesandoBaja(false);
+            setEliminandoId(null);
+        }
+    };
+
     const handleEliminar = async (user: Usuario): Promise<void> => {
         const id = obtenerId(user);
 
         if (id === undefined || id === null || id === '') {
-            alert('No se pudo identificar el usuario a eliminar (ID inválido).');
+            setErrorAccion('No se pudo identificar el usuario a eliminar (ID inválido).');
             return;
         }
-
-        const nombreCompleto =
-            `${user.nombre || ''} ${user.apellidos || ''}`.trim() || 'este usuario';
-
-        const confirmar = window.confirm(
-            `¿Estás seguro de eliminar a "${nombreCompleto}" de forma permanente?\n\n` +
-                `Si el usuario tiene pedidos, reservas o historial asociado, la eliminación podría fallar.\n` +
-                `En ese caso, considera cambiar su estado a "Inactivo" en lugar de borrarlo.`
-        );
-        if (!confirmar) return;
 
         setEliminandoId(id);
 
         try {
-            const res = await api.delete(`/usuarios/${id}`);
-            console.log('Eliminación OK:', res.status, res.data);
-            await fetchUsuarios();
+            // Consultamos el impacto siempre
+            const respuesta = await api.get<{ impacto: ImpactoUsuario }>(
+                `/usuarios/${id}/impacto`
+            );
+            const impacto = respuesta.data.impacto;
+
+            // Siempre abrimos el modal de decisión, sin importar si tiene 0 registros
+            setUsuarioBaja(user);
+            setImpactoBaja(impacto);
+            setErrorBaja('');
         } catch (err: any) {
-            console.error('Error al eliminar usuario:', {
-                status: err.response?.status,
-                data: err.response?.data,
-                url: err.config?.url,
-                method: err.config?.method,
-                message: err.message,
-            });
+            console.error('Error al preparar la baja del usuario:', err.response?.data || err.message);
 
-            const mensajeBackend =
-                err.response?.data?.error ||
-                err.response?.data?.message ||
-                err.response?.data?.detail ||
-                err.message ||
-                'Error desconocido';
-
-            const status = err.response?.status;
-            let mensajeFinal = mensajeBackend;
-
-            if (status === 401 || status === 403) {
-                mensajeFinal =
-                    'No tienes permisos para eliminar usuarios o tu sesión expiró. ' +
-                    'Vuelve a iniciar sesión e inténtalo de nuevo.';
-            } else if (status === 404) {
-                mensajeFinal = 'El usuario no existe o ya fue eliminado previamente.';
-            } else if (status === 409 || status === 500) {
-                mensajeFinal =
-                    'No se puede eliminar este usuario porque tiene información asociada en el sistema ' +
-                    '(pedidos, reservas, historial, etc.).\n\n' +
-                    'Sugerencia: cambia su estado a "Inactivo" en lugar de eliminarlo, ' +
-                    'así conservas el historial y le quitas el acceso.';
-            }
-
-            alert(`No se pudo eliminar (${status ?? 'sin conexión'}):\n\n${mensajeFinal}`);
+            // Cualquier fallo → abrimos modal con el error
+            setUsuarioBaja(user);
+            setImpactoBaja(null);
+            setErrorBaja(mensajeErrorBaja(err));
         } finally {
             setEliminandoId(null);
         }
@@ -295,6 +367,80 @@ const PanelAdmin = () => {
 
     return (
         <div className="space-y-6">
+            {/* ============================================ */}
+            {/* NOTIFICACIÓN EMERGENTE (TOAST) — arriba izq. */}
+            {/* ============================================ */}
+            {notificacion && (
+                <>
+                    <style>{`
+                        @keyframes toastSlideInLeft {
+                            from { opacity: 0; transform: translateX(-24px); }
+                            to   { opacity: 1; transform: translateX(0); }
+                        }
+                    `}</style>
+                    <div
+                        role="status"
+                        aria-live="polite"
+                        className="fixed top-4 left-4 z-[200] pointer-events-none"
+                        style={{ animation: 'toastSlideInLeft 0.3s ease-out' }}
+                    >
+                        <div
+                            className={`pointer-events-auto flex items-start gap-3 rounded-xl border px-4 py-3 shadow-lg backdrop-blur-sm min-w-[260px] max-w-sm ${
+                                notificacion.tipo === 'exito'
+                                    ? 'bg-green-50/95 border-green-200 text-green-800 dark:bg-green-950/80 dark:border-green-800 dark:text-green-300'
+                                    : notificacion.tipo === 'error'
+                                      ? 'bg-red-50/95 border-red-200 text-red-800 dark:bg-red-950/80 dark:border-red-800 dark:text-red-300'
+                                      : 'bg-blue-50/95 border-blue-200 text-blue-800 dark:bg-blue-950/80 dark:border-blue-800 dark:text-blue-300'
+                            }`}
+                        >
+                            <span className="shrink-0 mt-0.5">
+                                {notificacion.tipo === 'exito' ? (
+                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                ) : notificacion.tipo === 'error' ? (
+                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                ) : (
+                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                )}
+                            </span>
+                            <span className="text-sm font-medium flex-1">
+                                {notificacion.mensaje}
+                            </span>
+                            <button
+                                type="button"
+                                onClick={() => setNotificacion(null)}
+                                className="text-xs opacity-60 hover:opacity-100 transition-opacity"
+                                aria-label="Cerrar notificación"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                    </div>
+                </>
+            )}
+
+            {errorAccion && (
+                <div
+                    role="alert"
+                    className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300"
+                >
+                    <div className="flex items-center justify-between gap-3">
+                        <span>{errorAccion}</span>
+                        <button
+                            type="button"
+                            onClick={() => setErrorAccion('')}
+                            className="font-semibold hover:underline"
+                        >
+                            Cerrar
+                        </button>
+                    </div>
+                </div>
+            )}
             {/* Cabecera */}
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
                 <div>
@@ -797,6 +943,132 @@ const PanelAdmin = () => {
                 onSave={handleGuardarUsuario}
                 usuarioId={usuarioIdEditar}
             />
+
+            {usuarioBaja && (impactoBaja || errorBaja) && (
+                <div
+                    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+                    role="presentation"
+                    onMouseDown={(event) => {
+                        if (event.target === event.currentTarget) cerrarModalBaja();
+                    }}
+                >
+                    <section
+                        className="w-full max-w-lg rounded-2xl border border-claro-borde bg-claro-tarjeta p-6 shadow-2xl dark:border-oscuro-borde dark:bg-oscuro-tarjeta"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="titulo-baja-usuario"
+                    >
+                        <div className="flex items-start justify-between gap-4">
+                            <div>
+                                <h2
+                                    id="titulo-baja-usuario"
+                                    className="text-xl font-bold text-claro-texto dark:text-oscuro-texto"
+                                >
+                                    Gestionar baja de usuario
+                                </h2>
+                                <p className="mt-1 text-sm text-claro-texto2 dark:text-oscuro-texto2">
+                                    {`${usuarioBaja.nombre || ''} ${usuarioBaja.apellidos || ''}`.trim()}
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={cerrarModalBaja}
+                                disabled={procesandoBaja}
+                                className="rounded-lg p-2 text-claro-texto2 hover:bg-claro-fondo disabled:opacity-50 dark:text-oscuro-texto2 dark:hover:bg-oscuro-fondo"
+                                aria-label="Cerrar"
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        {errorBaja ? (
+                            <div
+                                role="alert"
+                                className="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300"
+                            >
+                                {errorBaja}
+                            </div>
+                        ) : impactoBaja && impactoBaja.total > 0 ? (
+                            <>
+                                <p className="mt-5 text-sm text-claro-texto dark:text-oscuro-texto">
+                                    Este usuario tiene registros asociados en el sistema:
+                                </p>
+                                <ul className="mt-3 grid grid-cols-2 gap-2 text-sm">
+                                    {[
+                                        ['Reservas', impactoBaja.reservas],
+                                        ['Pagos', impactoBaja.pagos],
+                                        ['Inscripciones', impactoBaja.inscripciones],
+                                        ['Eventos', impactoBaja.eventos],
+                                        ['Canchas administradas', impactoBaja.canchasAdministradas],
+                                        ['Canchas controladas', impactoBaja.canchasControladas],
+                                        ['Supervisiones', impactoBaja.supervisiones],
+                                    ]
+                                        .filter(([, cantidad]) => Number(cantidad) > 0)
+                                        .map(([etiqueta, cantidad]) => (
+                                            <li
+                                                key={String(etiqueta)}
+                                                className="rounded-lg bg-claro-fondo px-3 py-2 text-claro-texto dark:bg-oscuro-fondo dark:text-oscuro-texto"
+                                            >
+                                                {etiqueta}: <strong>{cantidad}</strong>
+                                            </li>
+                                        ))}
+                                </ul>
+                            </>
+                        ) : (
+                            <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-300">
+                                <p className="font-semibold text-base mb-1 flex items-center gap-2">
+                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                    ¿Estás seguro que deseas eliminar esta cuenta?
+                                </p>
+                                <p className="mt-2 opacity-90">
+                                    No se encontraron registros asociados. La cuenta se marcará como <strong>eliminada</strong> y el usuario perderá acceso al sistema de forma permanente.
+                                </p>
+                            </div>
+                        )}
+
+                        <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                            <button
+                                type="button"
+                                onClick={cerrarModalBaja}
+                                disabled={procesandoBaja}
+                                className="rounded-xl border border-claro-borde px-4 py-2.5 text-sm font-medium text-claro-texto hover:bg-claro-fondo disabled:opacity-50 dark:border-oscuro-borde dark:text-oscuro-texto dark:hover:bg-oscuro-fondo"
+                            >
+                                Cancelar
+                            </button>
+                            {impactoBaja && (
+                                <>
+                                    {impactoBaja.total > 0 && (
+                                        <button
+                                            type="button"
+                                            onClick={() => ejecutarBaja('desactivar')}
+                                            disabled={procesandoBaja}
+                                            className="rounded-xl bg-amber-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-amber-700 disabled:opacity-50"
+                                        >
+                                            {procesandoBaja ? 'Procesando...' : 'Desactivar'}
+                                        </button>
+                                    )}
+                                    <button
+                                        type="button"
+                                        onClick={() => ejecutarBaja('eliminar')}
+                                        disabled={procesandoBaja}
+                                        className="rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+                                    >
+                                        {procesandoBaja
+                                            ? 'Procesando...'
+                                            : errorBaja
+                                              ? 'Reintentar eliminación'
+                                              : impactoBaja.total === 0
+                                                ? 'Sí, eliminar cuenta'
+                                                : 'Eliminar'}
+                                    </button>
+                                </>
+                            )}
+                        </div>
+                    </section>
+                </div>
+            )}
         </div>
     );
 };
