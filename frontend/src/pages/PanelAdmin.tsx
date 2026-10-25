@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { createPortal } from 'react-dom'; // 👈 NUEVO IMPORT
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -944,7 +945,8 @@ const PanelAdmin = () => {
                 usuarioId={usuarioIdEditar}
             />
 
-            {usuarioBaja && (impactoBaja || errorBaja) && (
+            {/* 👇 AQUÍ APLICAMOS EL PORTAL PARA EL MODAL DE BAJA 👇 */}
+            {usuarioBaja && (impactoBaja || errorBaja) && createPortal(
                 <div
                     className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
                     role="presentation"
@@ -1067,7 +1069,8 @@ const PanelAdmin = () => {
                             )}
                         </div>
                     </section>
-                </div>
+                </div>,
+                document.body // 👈 Le decimos a React que lo renderice en el body
             )}
         </div>
     );
