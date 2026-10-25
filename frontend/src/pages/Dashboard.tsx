@@ -1,8 +1,10 @@
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { Link } from 'react-router-dom';
 
 const Dashboard = () => {
     const { usuario } = useAuth();
+    const { theme, toggleTheme } = useTheme();
 
     // Obtener saludo según hora local
     const getSaludo = () => {
@@ -28,42 +30,67 @@ const Dashboard = () => {
     return (
         <div className="space-y-8 pb-10">
             {/* =========================================================
-                1. HERO BANNER EJECUTIVO CON ACCESO DIRECTO AL HOME
+                1. HERO BANNER EJECUTIVO CON ACCESO DIRECTO AL HOME Y TEMA
                ========================================================= */}
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#1C3034] via-[#152326] to-[#261211] p-8 md:p-10 text-white shadow-xl border border-white/10">
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#FAF5EC] via-[#F1EADA] to-[#E5DDCB] text-claro-texto border border-claro-borde shadow-md dark:bg-gradient-to-r dark:from-[#1C3034] dark:via-[#152326] dark:to-[#261211] dark:text-white dark:border-white/10 dark:shadow-xl p-8 md:p-10 transition-colors duration-300">
                 {/* Elementos decorativos de fondo con glassmorphism */}
-                <div className="absolute -right-16 -top-16 w-64 h-64 rounded-full bg-[#1C3034]/40 blur-3xl pointer-events-none" />
-                <div className="absolute right-32 -bottom-20 w-72 h-72 rounded-full bg-[#261211]/35 blur-3xl pointer-events-none" />
+                <div className="absolute -right-16 -top-16 w-64 h-64 rounded-full bg-emerald-500/10 dark:bg-[#1C3034]/40 blur-3xl pointer-events-none" />
+                <div className="absolute right-32 -bottom-20 w-72 h-72 rounded-full bg-teal-500/10 dark:bg-[#261211]/35 blur-3xl pointer-events-none" />
                 
                 <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                     <div className="space-y-3">
                         <div className="flex flex-wrap items-center gap-3">
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-white/15 backdrop-blur-md border border-white/20 text-[#F1EADA]">
-                                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-600/10 dark:bg-white/15 backdrop-blur-md border border-emerald-600/20 dark:border-white/20 text-emerald-800 dark:text-[#F1EADA]">
+                                <span className="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse"></span>
                                 Sesión Activa
                             </span>
-                            <span className="text-xs uppercase tracking-wider text-slate-300 capitalize font-medium">
+                            <span className="text-xs uppercase tracking-wider text-claro-texto2 dark:text-slate-300 capitalize font-medium">
                                 📅 {fechaFormateada}
                             </span>
                         </div>
 
-                        <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight text-[#F1EADA]">
+                        <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight text-claro-texto dark:text-[#F1EADA]">
                             {getSaludo()}, {usuario?.nombre || 'Usuario'} 👋
                         </h1>
 
-                        <p className="text-slate-300 text-base md:text-lg max-w-xl font-normal">
-                            Panel de control para <span className="font-semibold text-emerald-300 underline decoration-emerald-500/50 underline-offset-4">{usuario?.rol || 'Usuario'}</span>. Supervisa reservas, canchas y actividades en tiempo real.
+                        <p className="text-claro-texto2 dark:text-slate-300 text-base md:text-lg max-w-xl font-normal">
+                            Panel de control para <span className="font-semibold text-emerald-700 dark:text-emerald-300 underline decoration-emerald-500/50 underline-offset-4">{usuario?.rol || 'Usuario'}</span>. Supervisa reservas, canchas y actividades en tiempo real.
                         </p>
                     </div>
 
-                    {/* Botones de Acción Destacada: Retorno al Home + Exploración rápida */}
+                    {/* Botones de Acción Destacada: Modo Claro/Oscuro + Retorno al Home + Exploración */}
                     <div className="flex flex-wrap items-center gap-3 shrink-0">
+                        {/* Botón interactivo para alternar tema Claro / Oscuro */}
+                        <button
+                            type="button"
+                            onClick={toggleTheme}
+                            className="inline-flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-white dark:bg-white/15 hover:bg-slate-50 dark:hover:bg-white/25 border border-claro-borde dark:border-white/25 text-claro-texto dark:text-[#F1EADA] font-semibold text-sm backdrop-blur-md transition-all hover:scale-105 active:scale-95 shadow-sm cursor-pointer"
+                            title={theme === 'light' ? 'Cambiar a Modo Oscuro' : 'Cambiar a Modo Claro'}
+                            aria-label="Alternar modo claro y oscuro"
+                        >
+                            {theme === 'light' ? (
+                                <>
+                                    <svg className="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                                    </svg>
+                                    <span>Modo Oscuro</span>
+                                </>
+                            ) : (
+                                <>
+                                    <svg className="w-5 h-5 text-amber-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                                    </svg>
+                                    <span>Modo Claro</span>
+                                </>
+                            )}
+                        </button>
+
                         <Link
                             to="/"
-                            className="inline-flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-white/15 hover:bg-white/25 border border-white/25 text-[#F1EADA] font-semibold text-sm backdrop-blur-md transition-all hover:scale-105 shadow-md"
+                            className="inline-flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-white dark:bg-white/15 hover:bg-slate-50 dark:hover:bg-white/25 border border-claro-borde dark:border-white/25 text-claro-texto dark:text-[#F1EADA] font-semibold text-sm backdrop-blur-md transition-all hover:scale-105 shadow-sm"
                             title="Volver a la Página Principal (Home)"
                         >
-                            <svg className="w-5 h-5 text-emerald-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg className="w-5 h-5 text-emerald-600 dark:text-emerald-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                             </svg>
                             <span>Volver al Home</span>
@@ -71,7 +98,7 @@ const Dashboard = () => {
 
                         <Link
                             to="/canchas"
-                            className="inline-flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 text-[#F1EADA] font-semibold text-sm transition-all hover:scale-105 shadow-lg shadow-emerald-950/40"
+                            className="inline-flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm transition-all hover:scale-105 shadow-md shadow-emerald-700/20 dark:bg-gradient-to-r dark:from-emerald-600 dark:to-teal-700 dark:hover:from-emerald-500 dark:hover:to-teal-600 dark:text-[#F1EADA] dark:shadow-emerald-950/40"
                         >
                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />

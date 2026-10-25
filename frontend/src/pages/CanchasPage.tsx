@@ -24,7 +24,7 @@ export const CanchasPage: React.FC = () => {
         </p>
       </div>
 
-      <div className="bg-bg-main p-4 md:p-6 rounded-2xl border border-border-subtle shadow-md">
+      <div className="bg-claro-tarjeta dark:bg-oscuro-tarjeta p-4 md:p-6 rounded-2xl border border-claro-borde dark:border-oscuro-borde shadow-sm transition-colors duration-300">
         <CanchaList
           title="Catálogo Operativo de Canchas"
           subtitle="Monitoreo de estado, precios por hora y control de mantenimiento."

@@ -225,33 +225,30 @@ export const CanchaList: React.FC<CanchaListProps> = ({
 
       <div className="section-header">
         <div>
-          <div className="inline-badge">
-            <span className={`status-indicator ${isBackendOnline ? 'online' : 'demo'}`}></span>
-            {isBackendOnline ? 'Conectado a PostgreSQL (Backend API)' : 'Modo Demostración Frontend'}
-          </div>
-          <h2 className="section-title">{title}</h2>
-          <p className="section-subtitle">{subtitle}</p>
+          <h2 className="section-title text-claro-texto dark:text-oscuro-texto">{title}</h2>
+          <p className="section-subtitle text-claro-texto2 dark:text-oscuro-texto2">{subtitle}</p>
         </div>
 
         <div className="header-actions">
-          {/* Botón Nueva Cancha: Exclusivo para Administradores */}
+          {/* Botón Nueva Cancha: Exclusivo para Administradores (Tema Oscuro y Claro) */}
           {isAdmin ? (
             <button
               type="button"
-              className="btn-primary"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all shadow-md active:scale-95 bg-[#1C3034] hover:bg-[#264349] text-[#F1EADA] border border-[#1C3034]/20 shadow-slate-900/10 dark:bg-emerald-500 dark:hover:bg-emerald-400 dark:text-slate-950 dark:border-emerald-400/30 dark:shadow-emerald-950/40 cursor-pointer"
               onClick={handleOpenCreateModal}
+              title="Crear Nueva Cancha"
             >
-              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18" className="stroke-2">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              Nueva Cancha
+              <span>Nueva Cancha</span>
             </button>
           ) : isEmpleado ? (
-            <span className="text-xs text-text-muted px-3 py-1 bg-bg-surface rounded-full border border-border-subtle">
+            <span className="text-xs text-claro-texto2 dark:text-oscuro-texto2 px-3 py-1 bg-claro-tinte/50 dark:bg-oscuro-tinte/50 rounded-full border border-claro-borde dark:border-oscuro-borde">
               Empleado: solo puedes editar canchas
             </span>
           ) : (
-            <span className="text-xs text-text-muted px-3 py-1 bg-bg-surface rounded-full border border-border-subtle">
+            <span className="text-xs text-claro-texto2 dark:text-oscuro-texto2 px-3 py-1 bg-claro-tinte/50 dark:bg-oscuro-tinte/50 rounded-full border border-claro-borde dark:border-oscuro-borde">
               {isAuthenticated ? `Sesión: ${usuario?.nombre} (${usuario?.rol})` : 'Modo Explorador / Reservas'}
             </span>
           )}

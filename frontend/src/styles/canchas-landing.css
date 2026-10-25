@@ -4,24 +4,25 @@
    ============================================================================ */
 
 :root {
-  /* Paleta Oficial del Complejo Deportivo:
-     #261211 (Bordó/Caoba), #1C3034 (Verde Petróleo/Pizarra), 
-     #F1EADA (Marfil Cálido), #101010 (Negro Obsidiana) */
-  --bg-main: #101010;
-  --bg-surface: #141b1d;
-  --bg-card: #162427;
-  --bg-card-hover: #1C3034;
-  --bg-input: #111a1c;
-  --border-subtle: rgba(241, 234, 218, 0.12);
-  --border-focus: #528c86;
+  /* =========================================================
+     MODO CLARO (Por defecto o sin clase .dark)
+     Base IVORY (#F1EADA) + PETROLEUM (#1C3034)
+     ========================================================= */
+  --bg-main: #F1EADA;
+  --bg-surface: #FAF5EC;
+  --bg-card: #FAF5EC;
+  --bg-card-hover: #E5DDCB;
+  --bg-input: #FFFFFF;
+  --border-subtle: #DCD3C1;
+  --border-focus: #1C3034;
 
   --accent-primary: #1C3034;
   --accent-primary-hover: #264349;
   --accent-wine: #261211;
   --accent-wine-hover: #3d1b1a;
 
-  --text-main: #F1EADA;
-  --text-muted: #b8b1a3;
+  --text-main: #101010;
+  --text-muted: #4A4643;
   --text-dim: #7f796f;
 
   --palette-teal: #1C3034;
@@ -32,12 +33,11 @@
   --danger: #ef4444;
   --danger-hover: #dc2626;
   --warning: #f59e0b;
-  --success: #34d399;
+  --success: #10b981;
 
-  /* Sombras y elevaciones */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 4px 14px -1px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 14px 32px -4px rgba(0, 0, 0, 0.65);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 14px -1px rgba(0, 0, 0, 0.12);
+  --shadow-lg: 0 14px 32px -4px rgba(0, 0, 0, 0.18);
 
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -45,6 +45,33 @@
   --radius-full: 9999px;
 
   --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* =========================================================
+   MODO OSCURO (Cuando html tiene clase .dark)
+   Base OBSIDIAN (#101010) + PETROLEUM (#1C3034) + IVORY (#F1EADA)
+   ========================================================= */
+html.dark, .dark {
+  --bg-main: #101010;
+  --bg-surface: #151d20;
+  --bg-card: #162427;
+  --bg-card-hover: #1C3034;
+  --bg-input: #111a1c;
+  --border-subtle: #26383c;
+  --border-focus: #5DA797;
+
+  --accent-primary: #10b981;
+  --accent-primary-hover: #059669;
+  --accent-wine: #261211;
+  --accent-wine-hover: #3d1b1a;
+
+  --text-main: #F1EADA;
+  --text-muted: #A8A296;
+  --text-dim: #7f796f;
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 14px -1px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 14px 32px -4px rgba(0, 0, 0, 0.65);
 }
 
 * {
@@ -167,7 +194,7 @@ body {
   align-items: center;
   gap: 0.5rem;
   background: var(--accent-primary);
-  color: #041f14;
+  color: #F1EADA;
   font-weight: 600;
   font-size: 0.95rem;
   padding: 0.65rem 1.25rem;
@@ -180,7 +207,15 @@ body {
 .btn-primary:hover {
   background: var(--accent-primary-hover);
   transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 4px 14px rgba(28, 48, 52, 0.25);
+}
+
+.dark .btn-primary {
+  color: #041f14;
+}
+
+.dark .btn-primary:hover {
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
 }
 
 .btn-primary-sm {
@@ -640,6 +675,37 @@ body {
   border-color: rgba(241, 234, 218, 0.32);
   transform: translateY(-4px);
   box-shadow: 0 16px 36px -6px rgba(0, 0, 0, 0.75), 0 0 24px rgba(28, 48, 52, 0.4);
+}
+
+/* Adaptación a Modo Claro */
+html:not(.dark) .cancha-card {
+  background: #FAF5EC;
+  border-color: #DCD3C1;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+html:not(.dark) .cancha-card:hover {
+  background: #FFFFFF;
+  border-color: #1C3034;
+  box-shadow: 0 14px 30px rgba(28, 48, 52, 0.15);
+}
+
+html:not(.dark) .cancha-card-media-overlay {
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.35) 0%, rgba(0, 0, 0, 0.05) 45%, rgba(250, 245, 236, 0.95) 100%);
+}
+
+html:not(.dark) .card-specs {
+  background: #F1EADA;
+  border-color: #DCD3C1;
+}
+
+html:not(.dark) .btn-reserve {
+  background: #1C3034;
+  color: #F1EADA;
+}
+
+html:not(.dark) .btn-reserve:hover {
+  background: #264349;
 }
 
 /* Banner de Fotografía de la Cancha */

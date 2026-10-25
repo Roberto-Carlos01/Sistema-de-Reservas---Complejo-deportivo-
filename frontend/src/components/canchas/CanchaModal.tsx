@@ -98,23 +98,22 @@ export const CanchaModal: React.FC<CanchaModalProps> = ({
   if (canEditOnly && !isEditing) {
     return (
       <div className="modal-backdrop" onClick={onClose}>
-        <div className="modal-content" onClick={e => e.stopPropagation()}>
-          <div className="modal-header">
-            <h2>Acceso Restringido</h2>
-            <button type="button" className="btn-close" onClick={onClose}>×</button>
+        <div className="modal-content bg-claro-tarjeta dark:bg-oscuro-tarjeta text-claro-texto dark:text-oscuro-texto border border-claro-borde dark:border-oscuro-borde shadow-2xl rounded-2xl" onClick={e => e.stopPropagation()}>
+          <div className="modal-header border-b border-claro-borde dark:border-oscuro-borde pb-3 mb-4 flex items-center justify-between">
+            <h2 className="text-xl font-bold text-claro-texto dark:text-oscuro-texto">Acceso Restringido</h2>
+            <button type="button" className="btn-close text-claro-texto2 hover:text-claro-texto dark:text-oscuro-texto2 dark:hover:text-oscuro-texto text-2xl" onClick={onClose}>×</button>
           </div>
-          <div style={{ padding: '2rem', textAlign: 'center' }}>
+          <div style={{ padding: '1.5rem', textAlign: 'center' }}>
             <p style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🚫</p>
-            <p style={{ fontWeight: 600, marginBottom: '0.5rem' }}>Sin permisos para crear canchas</p>
-            <p style={{ color: 'var(--text-muted, #888)', fontSize: '0.9rem' }}>
+            <p className="font-bold text-claro-texto dark:text-oscuro-texto mb-2">Sin permisos para crear canchas</p>
+            <p className="text-claro-texto2 dark:text-oscuro-texto2 text-sm">
               El rol <strong>Empleado</strong> solo puede <strong>editar</strong> canchas existentes.
               Para crear nuevas canchas contacta al Administrador.
             </p>
             <button
               type="button"
-              className="btn-secondary"
+              className="px-5 py-2.5 rounded-xl font-semibold text-sm border border-claro-borde dark:border-oscuro-borde bg-claro-fondo dark:bg-oscuro-fondo text-claro-texto dark:text-oscuro-texto hover:bg-claro-tinte dark:hover:bg-oscuro-tinte transition-colors mt-6 cursor-pointer"
               onClick={onClose}
-              style={{ marginTop: '1.5rem' }}
             >
               Cerrar
             </button>
@@ -151,10 +150,10 @@ export const CanchaModal: React.FC<CanchaModalProps> = ({
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-content" onClick={e => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>{isEditing ? `Editar Cancha #${canchaToEdit?.id_cancha}` : 'Registrar Nueva Cancha'}</h2>
-          <button type="button" className="btn-close" onClick={onClose}>×</button>
+      <div className="modal-content bg-claro-tarjeta dark:bg-oscuro-tarjeta text-claro-texto dark:text-oscuro-texto border border-claro-borde dark:border-oscuro-borde shadow-2xl rounded-2xl" onClick={e => e.stopPropagation()}>
+        <div className="modal-header border-b border-claro-borde dark:border-oscuro-borde pb-3 mb-4 flex items-center justify-between">
+          <h2 className="text-xl font-bold text-claro-texto dark:text-oscuro-texto">{isEditing ? 'Editar Cancha' : 'Registrar Nueva Cancha'}</h2>
+          <button type="button" className="btn-close text-claro-texto2 hover:text-claro-texto dark:text-oscuro-texto2 dark:hover:text-oscuro-texto text-2xl" onClick={onClose} aria-label="Cerrar modal">×</button>
         </div>
 
         {errorMsg && (
@@ -326,10 +325,10 @@ export const CanchaModal: React.FC<CanchaModalProps> = ({
             </div>
           </div>
 
-          <div className="modal-actions">
+          <div className="modal-actions border-t border-claro-borde dark:border-oscuro-borde pt-4 mt-4 flex items-center justify-end gap-3">
             <button
               type="button"
-              className="btn-secondary"
+              className="px-5 py-2.5 rounded-xl font-semibold text-sm border border-claro-borde dark:border-oscuro-borde bg-claro-fondo dark:bg-oscuro-fondo text-claro-texto dark:text-oscuro-texto hover:bg-claro-tinte dark:hover:bg-oscuro-tinte transition-colors cursor-pointer"
               onClick={onClose}
               disabled={isSubmitting}
             >
@@ -337,10 +336,25 @@ export const CanchaModal: React.FC<CanchaModalProps> = ({
             </button>
             <button
               type="submit"
-              className="btn-primary"
+              className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm transition-all shadow-md active:scale-95 bg-[#1C3034] hover:bg-[#264349] text-[#F1EADA] border border-[#1C3034]/20 shadow-slate-900/10 dark:bg-emerald-500 dark:hover:bg-emerald-400 dark:text-slate-950 dark:border-emerald-400/30 dark:shadow-emerald-950/40 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Guardando...' : isEditing ? 'Guardar Cambios' : 'Registrar Cancha'}
+              {isSubmitting ? (
+                <>
+                  <svg className="animate-spin w-4 h-4 text-current" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                  </svg>
+                  <span>Guardando...</span>
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span>{isEditing ? 'Guardar Cambios' : 'Registrar Cancha'}</span>
+                </>
+              )}
             </button>
           </div>
         </form>

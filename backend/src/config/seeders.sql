@@ -57,13 +57,22 @@ INSERT INTO cliente (id_cliente, fecha_nacimiento, edad, ci_nit, calle, zona, ci
 
 -- ---------- CANCHA ----------
 INSERT INTO cancha (id_cancha, nombre, disciplina, capacidad, precio_hora, estado, ubicacion, largo, ancho, hora_apertura, hora_cierre) VALUES
-(1,'Cancha Central','futbol',22,120.00,'disponible','Bloque A - Planta baja',90,45,'07:00','22:00'),
-(2,'Cancha Norte','basquet',10,80.00,'disponible','Bloque B - Piso 1',28,15,'07:00','22:00'),
-(3,'Cancha Sur','voley',12,70.00,'disponible','Bloque B - Piso 1',18,9,'07:00','22:00'),
-(4,'Cancha Este','tenis',4,60.00,'mantenimiento','Bloque C - Exterior',24,11,'08:00','20:00'),
-(5,'Cancha de Padel 1','padel',4,65.00,'disponible','Bloque C - Exterior',20,10,'08:00','22:00'),
-(6,'Cancha Futsal','futsal',14,95.00,'disponible','Bloque A - Piso 1',40,20,'07:00','23:00'),
-(7,'Pista de Atletismo','atletismo',50,50.00,'disponible','Bloque E - Exterior',400,8,'06:00','20:00');
+(1,'Cancha Central de Fútbol 11','futbol',22,120.00,'disponible','Bloque A - Planta baja',105,68,'07:00','23:00'),
+(2,'Cancha de Fútbol 8 - Sintético','futbol',16,100.00,'disponible','Bloque A - Campo Auxiliar',65,45,'07:00','23:00'),
+(3,'Cancha de Fútbol 7 - Los Pinos','futbol',14,85.00,'disponible','Sector Sur - Campo C',50,30,'07:00','23:00'),
+(4,'Cancha Futsal Techada Pro','futsal',10,90.00,'disponible','Bloque A - Piso 1',40,20,'07:00','23:00'),
+(5,'Cancha Futsal Sintética Lateral','futsal',10,80.00,'disponible','Sector C - Lateral',40,20,'07:00','23:00'),
+(6,'Cancha Pádel 1 - Cristal Panorámica','padel',4,80.00,'disponible','Bloque C - Exterior Cristal',20,10,'06:00','23:30'),
+(7,'Cancha Pádel 2 - Pro Master','padel',4,80.00,'disponible','Bloque C - Exterior Master',20,10,'06:00','23:30'),
+(8,'Cancha Tenis 1 - Polvo de Ladrillo','tenis',4,95.00,'disponible','Sector Tenis - Cancha Principal',24,11,'06:30','22:00'),
+(9,'Cancha Tenis 2 - Cemento Rápida','tenis',4,85.00,'disponible','Sector Tenis - Cancha Azul',24,11,'06:30','22:00'),
+(10,'Cancha Tenis 3 - Césped Sintético','tenis',4,90.00,'disponible','Sector Tenis - Cancha Verde',24,11,'06:30','22:00'),
+(11,'Coliseo Central de Básquetbol','basquet',10,80.00,'disponible','Bloque B - Piso 1 Coliseo',28,15,'07:00','22:30'),
+(12,'Cancha Básquet Exterior - Tablado','basquet',10,65.00,'disponible','Explanada Deportiva Norte',28,15,'07:00','22:00'),
+(13,'Cancha Voleibol 1 - Arena Playa','voley',12,60.00,'disponible','Sector Playa & Solarium',16,8,'08:00','21:00'),
+(14,'Cancha Voleibol 2 - Arena Pro','voley',12,60.00,'disponible','Sector Playa - Cancha Sur',16,8,'08:00','21:00'),
+(15,'Cancha Voleibol 3 - Sala Techada','voley',12,70.00,'disponible','Bloque B - Sala Techada Polideportiva',18,9,'07:00','22:00'),
+(16,'Cancha Voleibol 4 - Pista Rápida','voley',12,70.00,'disponible','Bloque B - Pista Rápida',18,9,'07:00','22:00');
 
 -- ---------- UTILIDAD ----------
 INSERT INTO utilidad (id_utilidad, nombre, estado) VALUES
